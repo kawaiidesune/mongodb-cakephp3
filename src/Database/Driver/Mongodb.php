@@ -1,6 +1,7 @@
 <?php
 namespace Hayko\Mongodb\Database\Driver;
-use MongoDB as Mongo;
+use MongoDB\Driver\Manager;
+use MongoDB\Driver\ReadPreference;
 
 class Mongodb {
 	/**
@@ -93,6 +94,12 @@ class Mongodb {
 	 */
 		public function connect() {
 			try {
+				/****************************************************************************
+				 *
+				 * THIS IS THE SSH TUNNEL CODE WE WROTE. UNLESS IT'S BROKE, WE DON'T NEED TO
+				 * PAY ATTENTION TO THIS!!!
+				 *
+				 ****************************************************************************/
 				if (($this->config['ssh_user'] != '') && ($this->config['ssh_host'])) { // Because a user is required for all of the SSH authentication functions.
 					if (intval($this->config['ssh_port']) != 0) {
 						$port = $this->config['ssh_port'];
@@ -130,50 +137,53 @@ class Mongodb {
 						trigger_error('A SSH tunnel was unable to be created to access '. $this->config['host'] .':'. $this->config['port'] .' on '. $this->config['ssh_user'] .'@'. $this->config['ssh_host'] .':'. $port);
 					}
 				}
+				/****************************************************************************
+				 *
+				 * THIS IS THE END OF THE SSH TUNNEL CODE WE WROTE. TIME TO REWRITE THIS SHIT!
+				 *
+				 ****************************************************************************/
+				// Also, if this connection fails when using a SSH tunnel, determine whether it was because we instantiated this connection improperly.
+				// Furthermore, is this the right way to instantiate this class? It looks weird to me, but this is the example given in the PHP Manual.
+				// (i.e. http://php.net/manual/en/class.mongodb-driver-manager.php)
+				$this->connection = new MongoDB\Driver\Manager($this->createConnectionName());
 				
-				$host = $this->createConnectionName();
-				$class = '\MongoClient';
-				if (!class_exists($class)) {
-					$class = '\Mongo';
-					if (!class_exists($class)) {
-						$class = '\MongoDB';
-					}
-				}
-
-				if (isset($this->_config['replicaset']) && count($this->_config['replicaset']) === 2) {
-					$this->connection = new $class($this->_config['replicaset']['host'], $this->_config['replicaset']['options']);
-				} else if ($this->_driverVersion >= '1.3.0') {
-					$this->connection = new $class($host);
-				} else if ($this->_driverVersion >= '1.2.0') {
-					$this->connection = new $class($host, array("persist" => $this->_config['persistent']));
-				} else {
-					$this->connection = new $class($host, true, $this->_config['persistent']);
-				}
-
-				if (isset($this->_config['slaveok'])) {
+				// TODO: Write some code to test the connection to the server and apply error handling if this fails.
+				
+				// TODO: Figure out what is setting $this->_config['slaveok'], as I can't find it here or in /src/Database/connection.php, nor in the variables declared...
+				if (isset($this->_config['slaveok'])) { 
 					if (method_exists($this->connection, 'setSlaveOkay')) {
-						$this->connection->setSlaveOkay($this->_config['slaveok']);
+						// $this->connection->setSlaveOkay($this->_config['slaveok']);
+						// What the hell is the "setSlaveOkay" method and if so, has it been replicated in the new driver... and as what?
 					} else {
-						$this->connection->setReadPreference($this->_config['slaveok']
-							? $class::RP_SECONDARY_PREFERRED : $class::RP_PRIMARY);
+						$rp = new MongoDB\Driver\ReadPreference($this->_config['slaveok']
+							? MongoDB\Driver\ReadPreference::RP_SECONDARY_PREFERRED : MongoDB\Driver\ReadPreference::RP_PRIMARY);
 					}
 				}
+				$serverStatus = new MongoDB\Driver\Command("db.serverStatus()");
 
-				if ($this->_db = $this->connection->selectDB($this->_config['database'])) {
-					if (!empty($this->_config['login']) && $this->_driverVersion < '1.2.0') {
-						$return = $this->_db->authenticate($this->_config['login'], $this->_config['password']);
-						if (!$return || !$return['ok']) {
-							trigger_error('MongodbSource::__construct ' . $return['errmsg']);
-							return false;
-						}
-					}
+				// It returns MongoDB\Driver\Cursor on success, but what does it return on failure? O.o
+				// Nothing? One can wonder because the function, when instantiated, returns MongoDB\Driver\Cursor... and I'm not sure you can
+				// multitype when you define the value it does return.
+				if ($this->connection->executeCommand($this->_config['database'], $serverStatus)) {
 					$this->connected = true;
 				}
 
-			} catch (MongoException $e) {
+			} catch (MongoException $e) { // The data in this catch() function is not only the wrong type for the new driver, MongoExceptions are divided in the new documentation.
+				/****************************************************************************
+				 *
+				 * THIS CATCH CLAUSE...
+				 * This obviously needs to be rewritten, as MongoException has been expanded out
+				 * to several different classes. Calling getMessage() on this variable may not
+				 * even work.
+				 *
+				 * So, basically, one would have their work cut out for them, but it is necessary,
+				 * as if something goes wrong in this function... we *do* need to know and apply
+				 * appropriate error handling.
+				 *
+				 ****************************************************************************/
 				trigger_error($e->getMessage());
+				$this->connected = false;
 			}
-
 			return $this->connected;
 		}
 
@@ -183,22 +193,16 @@ class Mongodb {
 	 * @access private
 	 * @return string
 	 */
-		private function createConnectionName() {
-			$host = '';
-
-			if ($this->_driverVersion >= '1.0.2') {
-				$host = 'mongodb://';
-			}
-			$hostname = $this->_config['host'] . ':' . $this->_config['port'];
-
-			if (!empty($this->_config['login'])) {
-				$host .= $this->_config['login'] . ':' . $this->_config['password'] . '@' . $hostname . '/' . $this->_config['database'];
-			} else {
-				$host .= $hostname;
-			}
-
-			return $host;
+	private function createConnectionName() {
+		$host = 'mongodb://';
+		$hostname = $this->_config['host'] . ':' . $this->_config['port'];
+		if (!empty($this->_config['login'])) {
+			$host .= $this->_config['login'] . ':' . $this->_config['password'] . '@' . $hostname . '/' . $this->_config['database'];
+		} else {
+			$host .= $hostname;
 		}
+		return $host;
+	}
 
 	/**
 	 * return MongoCollection object
