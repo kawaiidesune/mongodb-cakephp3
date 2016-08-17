@@ -18,7 +18,7 @@ class Table extends CakeTable {
 	/**
 	 * return MongoCollection object
 	 * 
-	 * @return MongoCollection
+	 * @return MongoDB\Driver\Cursor
 	 * @access private
 	 */
 	private function __getCollection() {
@@ -48,7 +48,7 @@ class Table extends CakeTable {
 	 * @access public
 	 */
 	public function find($type = 'all', $options = []) {
-		$query = new MongoFinder($this->__getCollection(), $options); // TODO: No more MongoFinder, so what is the new class called?
+		$query = new MongoFinder($this->__getCollection(), $options); // TODO: This makes no sense. Why feed a MongoDB\Driver\Cursor object into a function where a CONNECTION is supposed to be?
 		$method = 'find' . ucfirst($type);
 		if (method_exists($query, $method)) {
 			$mongoCursor = $query->{$method}();

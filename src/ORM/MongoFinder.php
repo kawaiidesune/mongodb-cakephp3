@@ -1,18 +1,16 @@
 <?php
-
 namespace Hayko\Mongodb\ORM;
 
 use Cake\Datasource\EntityInterface;
 
 class MongoFinder {
-
 	/**
 	 * connection with db
 	 * 
 	 * @var Mongo $_connection
 	 * @access protected
 	 */
-		protected $_connection;
+	protected $_connection;
 
 	/**
 	 * default options for find
@@ -20,10 +18,10 @@ class MongoFinder {
 	 * @var array $_options
 	 * @access protected
 	 */
-		protected $_options = [
-			'fields' => [],
-			'where' => [],
-		];
+	protected $_options = [
+		'fields' => [],
+		'where' => [],
+	];
 
 	/**
 	 * total number of rows
@@ -31,7 +29,7 @@ class MongoFinder {
 	 * @var int $_totalRows
 	 * @access protected
 	 */
-		protected $_totalRows;
+	protected $_totalRows;
 
 	/**
 	 * set connection and options to find
@@ -40,20 +38,20 @@ class MongoFinder {
 	 * @param array $options
 	 * @access public
 	 */
-		public function __construct($connection, $options = []) {
-			$this->connection($connection);
-			$this->_options = array_merge_recursive($this->_options, $options);
+	public function __construct($connection, $options = []) {
+		$this->connection($connection);
+		$this->_options = array_merge_recursive($this->_options, $options);
 
-			if (isset($options['conditions']) && !empty($options['conditions'])) {
-				$this->_options['where'] += $options['conditions'];
-				unset($this->_options['conditions']);
-			}
-
-			$this->__normalizeFieldsName($this->_options);
-			if (!empty($this->_options['where'])) {				
-				$this->__translateConditions($this->_options['where']);
-			}
+		if (isset($options['conditions']) && !empty($options['conditions'])) {
+			$this->_options['where'] += $options['conditions'];
+			unset($this->_options['conditions']);
 		}
+
+		$this->__normalizeFieldsName($this->_options);
+		if (!empty($this->_options['where'])) {				
+			$this->__translateConditions($this->_options['where']);
+		}
+	}
 
 	/**
 	 * connection

@@ -222,8 +222,7 @@ class Mongodb {
 		return $host;
 	}
 
-	/**
-	 * return MongoCollection object
+	/**]
 	 * 
 	 * @param string $collectionName
 	 * @return MongoDB\Driver\Cursor|bool If it can't select the collection, it SHOULD return false. If it can, it SHOULD return the MongoDB\Driver\Cursor object.
