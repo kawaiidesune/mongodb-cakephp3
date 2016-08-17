@@ -10,6 +10,7 @@ use Cake\ORM\Exception\MissingEntityException;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table as CakeTable;
 use Hayko\Mongodb\ORM\Behavior\SchemalessBehavior; // Where is this declared? If this is somewhere else, he namespaced it POORLY.
+use MongoDB\BSON\ObjectID;
 use RuntimeException;
 
 class Table extends CakeTable {
@@ -228,36 +229,36 @@ class Table extends CakeTable {
 	 * @return mixed $success
 	 * @access protected
 	 */
-		protected function _insert($entity, $data) {
-			$primary = (array)$this->primaryKey();
-			if (empty($primary)) {
-	            $msg = sprintf(
-	                'Cannot insert row in "%s" table, it has no primary key.',
-	                $this->table()
-	            );
-	            throw new RuntimeException($msg);
-	        }
-			$primary = ['_id' => $this->_newId($primary)];
+	protected function _insert($entity, $data) {
+		$primary = (array)$this->primaryKey();
+		if (empty($primary)) {
+            $msg = sprintf(
+                'Cannot insert row in "%s" table, it has no primary key.',
+                $this->table()
+            );
+            throw new RuntimeException($msg);
+        }
+		$primary = ['_id' => $this->_newId($primary)];
 
-	        $filteredKeys = array_filter($primary, 'strlen');
-	        $data = $data + $filteredKeys;
+        $filteredKeys = array_filter($primary, 'strlen');
+        $data = $data + $filteredKeys;
 
-	        $success = false;
-	        if (empty($data)) {
-	        	return $success;
-	        }
+        $success = false;
+        if (empty($data)) {
+        	return $success;
+        }
 
-	        $success = $entity;
-	        $collection = $this->__getCollection();
+        $success = $entity;
+        $collection = $this->__getCollection();
 
-	        if (is_object($collection)) {
-	        	$r = $collection->insert($data);
-	        	if ($r['ok'] == false) {
-	        		$success = false;
-	        	}
-	        }
-			return $success;
-		}
+        if (is_object($collection)) {
+        	$r = $collection->insert($data);
+        	if ($r['ok'] == false) {
+        		$success = false;
+        	}
+        }
+		return $success;
+	}
 
 	/**
 	 * update one document
@@ -267,20 +268,20 @@ class Table extends CakeTable {
 	 * @return mixed $success
 	 * @access protected
 	 */
-		protected function _update($entity, $data) {
-			unset($data['_id']);
+	protected function _update($entity, $data) {
+		unset($data['_id']);
 
-			$success = $entity;
-	        $collection = $this->__getCollection();
+		$success = $entity;
+        $collection = $this->__getCollection();
 
-	        if (is_object($collection)) {
-	        	$r = $collection->update(['_id' => new \MongoId($entity->_id)], $data);
-	        	if ($r['ok'] == false) {
-	        		$success = false;
-	        	}
-	        }
-			return $success;
-		}
+        if (is_object($collection)) {
+        	$r = $collection->update(['_id' => new \MongoId($entity->_id)], $data);
+        	if ($r['ok'] == false) {
+        		$success = false;
+        	}
+        }
+		return $success;
+	}
 
 	/**
 	 * create new MongoId
@@ -289,12 +290,11 @@ class Table extends CakeTable {
 	 * @return MongoId
 	 * @access public
 	 */
-		protected function _newId($primary) {
-			if (!$primary || count((array)$primary) > 1) {
-	            return null;
-	        }
+	protected function _newId($primary) {
+		if (!$primary || count((array)$primary) > 1) {
+            return null;
+        }
 
-	        return new \MongoId();
-		}
-
+        return new MongoDB\BSON\ObjectID();
+	}
 }

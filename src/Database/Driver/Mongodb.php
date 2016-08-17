@@ -157,13 +157,8 @@ class Mongodb {
 			
 			// TODO: Figure out what is setting $this->_config['slaveok'], as I can't find it here or in /src/Database/connection.php, nor in the variables declared...
 			if (isset($this->_config['slaveok'])) { 
-				if (method_exists($this->connection, 'setSlaveOkay')) {
-					// $this->connection->setSlaveOkay($this->_config['slaveok']);
-					// What the hell is the "setSlaveOkay" method and if so, has it been replicated in the new driver... and as what?
-				} else {
-					$rp = new MongoDB\Driver\ReadPreference($this->_config['slaveok']
-						? MongoDB\Driver\ReadPreference::RP_SECONDARY_PREFERRED : MongoDB\Driver\ReadPreference::RP_PRIMARY);
-				}
+				$rp = new MongoDB\Driver\ReadPreference($this->_config['slaveok']
+					? MongoDB\Driver\ReadPreference::RP_SECONDARY_PREFERRED : MongoDB\Driver\ReadPreference::RP_PRIMARY);
 			}
 			$serverStatus = new MongoDB\Driver\Command("db.serverStatus()");
 
@@ -253,13 +248,12 @@ class Mongodb {
 	 * 
 	 * @return boolean
 	 * @access public
+	 * @todo Find out if this is required by any other method, and if not, remove it (per the documentation at https://github.com/alcaeus/mongo-php-adapter)
 	 */
 	public function disconnect() {
 		if ($this->isConnected()) {
-			// TODO: Rewrite to use the close() equivalent in the new libraries. The function isConnected() should figure out that we're not connected on its own.
-			$this->connected = !$this->connection->close(); 
-			unset($this->_db, $this->connection);
-			// TODO: Test if this is connected, and return true if it is, false if it is not.
+			// There is no close() method to the MongoDB\Driver\Manager in the new libraries. Removed it.
+			unset($this->_db, $this->connection); // TODO: What the hell is $this->_db? Do we need it?
 			return true;
 		}
 		return true;
