@@ -95,20 +95,20 @@ class Connection implements ConnectionInterface {
 	 * @return string
 	 * @access public
 	 */
-		public function configName() {
-			return 'mongodb';
-		}	
+	public function configName() {
+		return 'mongodb'; // Seriously? A function to return a string?
+	}	
 
 	/**
-	 * 
+	 * @todo Nice documentation skills, Hayko.
 	 */
-		public function driver($driver = null, $config = []) {
-			if ($driver === null) {
-				return $this->_driver;
-			}
-			$this->_driver = new Haykodb($config);
+	public function driver($driver = null, $config = []) {
+		if ($driver === null) {
 			return $this->_driver;
 		}
+		$this->_driver = new Haykodb($config);
+		return $this->_driver;
+	}
 
 	/**
 	 * connect to the database
@@ -121,7 +121,7 @@ class Connection implements ConnectionInterface {
 				$this->_driver->connect();
 				return true;
 			} catch (Exception $e) {
-				throw new MissingConnectionException(['reason' => $e->getMessage()]);
+				throw new MissingConnectionException(['reason' => $e->getMessage()]); // TODO: Where the hell is this object and has it been replaced in the new driver?
 			}
 		}
 
@@ -143,6 +143,7 @@ class Connection implements ConnectionInterface {
 	 * 
 	 * @return booelan
 	 * @access public
+	 * @todo IF this is unnecessary, send this to the Department of Redundancy Department.
 	 */
 		public function isConnected() {
 			return $this->_driver->isConnected();
@@ -193,15 +194,15 @@ class Connection implements ConnectionInterface {
 	/**
 	 * 
 	 */
-		public function logger($instance = null) {
-			if ($instance === null) {
-	            if ($this->_logger === null) {
-	                $this->_logger = new QueryLogger;
-	            }
-	            return $this->_logger;
-	        }
-	        $this->_logger = $instance;
-		}
+	public function logger($instance = null) {
+		if ($instance === null) {
+            if ($this->_logger === null) {
+                $this->_logger = new QueryLogger; // TODO: Is this a new object or is this native to CakePHP.
+            }
+            return $this->_logger;
+        }
+        $this->_logger = $instance;
+	}
 
 	/**
      * Logs a Query string using the configured logger object.
@@ -209,9 +210,9 @@ class Connection implements ConnectionInterface {
      * @param string $sql string to be logged
      * @return void
      */
-	    public function log($sql) {
-	        $query = new LoggedQuery;
-	        $query->query = $sql;
-	        $this->logger()->log($query);
-	    }
+    public function log($sql) {
+        $query = new LoggedQuery;
+        $query->query = $sql;
+        $this->logger()->log($query);
+    }
 }
