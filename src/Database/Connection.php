@@ -156,7 +156,7 @@ class Connection implements ConnectionInterface {
 	 * @return \Hayko\Mongodb\Database\Schema\MongoSchema
 	 */
 		public function schemaCollection($collection = null) {
-			return $this->_schemaCollection = new MongoSchema($this->_driver);
+			return $this->_schemaCollection = new MongoSchema($this->_driver); // Well, THIS needs to be rewritten.
 		}
 
 	/**
@@ -165,9 +165,9 @@ class Connection implements ConnectionInterface {
 	 * @return false
 	 * @access public
 	 */
-		public function transactional(callable $transaction) {
-			return false;
-		}
+	public function transactional(callable $transaction) {
+		return false;
+	}
 
 	/**
 	 * Mongo doesn't support foreign keys
@@ -175,21 +175,21 @@ class Connection implements ConnectionInterface {
 	 * @return false
 	 * @access public
 	 */
-		public function disableConstraints(callable $operation) {
-			return false;
-		}
+	public function disableConstraints(callable $operation) {
+		return false;
+	}
 
 	/**
 	 * 
 	 * @access public
 	 * @return 
 	 */
-		public function logQueries($enable = null) {
-			if ($enable === null) {
-				return $this->_logQueries;
-			}
-			$this->_logQueries = $enable;
+	public function logQueries($enable = null) {
+		if ($enable === null) {
+			return $this->_logQueries;
 		}
+		$this->_logQueries = $enable;
+	}
 
 	/**
 	 * 

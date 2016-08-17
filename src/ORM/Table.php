@@ -9,7 +9,7 @@ use Cake\Datasource\Exception\InvalidPrimaryKeyException;
 use Cake\ORM\Exception\MissingEntityException;
 use Cake\ORM\RulesChecker;
 use Cake\ORM\Table as CakeTable;
-use Hayko\Mongodb\ORM\Behavior\SchemalessBehavior;
+use Hayko\Mongodb\ORM\Behavior\SchemalessBehavior; // Where is this declared? If this is somewhere else, he namespaced it POORLY.
 use RuntimeException;
 
 class Table extends CakeTable {
@@ -20,12 +20,12 @@ class Table extends CakeTable {
 	 * @return MongoCollection
 	 * @access private
 	 */
-		private function __getCollection() {
-			$driver = $this->connection()->driver();
-	        $collection = $driver->getCollection($this->table());
+	private function __getCollection() {
+		$driver = $this->connection()->driver();
+        $collection = $driver->getCollection($this->table());
 
-	        return $collection;
-		}
+        return $collection;
+	}
 
 	/**
 	 * always return true because mongo is schemaless
@@ -34,9 +34,9 @@ class Table extends CakeTable {
 	 * @return bool
 	 * @access public
 	 */
-		public function hasField($field) {
-			return true;
-		}
+	public function hasField($field) {
+		return true;
+	}
 
 	/**
 	 * find documents
@@ -46,24 +46,24 @@ class Table extends CakeTable {
 	 * @return MongoQuery|Cake\ORM\Entity
 	 * @access public
 	 */
-		public function find($type = 'all', $options = []) {
-			$query = new MongoFinder($this->__getCollection(), $options);
-			$method = 'find' . ucfirst($type);
-			if (method_exists($query, $method)) {
-				$mongoCursor = $query->{$method}();
-				$results = new ResultSet($mongoCursor, $this->alias());
+	public function find($type = 'all', $options = []) {
+		$query = new MongoFinder($this->__getCollection(), $options); // TODO: No more MongoFinder, so what is the new class called?
+		$method = 'find' . ucfirst($type);
+		if (method_exists($query, $method)) {
+			$mongoCursor = $query->{$method}();
+			$results = new ResultSet($mongoCursor, $this->alias());
 
-				if (isset($options['whitelist'])) {
-					return new MongoQuery($results->toArray(), $query->count());
-				} else {
-					return $results->toArray();
-				}
+			if (isset($options['whitelist'])) {
+				return new MongoQuery($results->toArray(), $query->count()); // Rewrite Query
+			} else {
+				return $results->toArray();
 			}
-
-			throw new BadMethodCallException(
-	            sprintf('Unknown method "%s"', $method)
-	        );
 		}
+
+		throw new BadMethodCallException(
+            sprintf('Unknown method "%s"', $method)
+        );
+	}
 
 	/**
 	 * get the document by _id
@@ -74,12 +74,12 @@ class Table extends CakeTable {
 	 * @access public
 	 */
 		public function get($primaryKey, $options = []) {
-			$query = new MongoFinder($this->__getCollection(), $options);
+			$query = new MongoFinder($this->__getCollection(), $options); // TODO: No more MongoFinder, so what is the new class called?
 			$mongoCursor = $query->get($primaryKey);
 
 			//if find document, convert to cake entity
 			if ($mongoCursor->count()) {
-				$document = new Document(current(iterator_to_array($mongoCursor)), $this->alias());
+				$document = new Document(current(iterator_to_array($mongoCursor)), $this->alias()); // This obviously refers to Hayko's Document class in /src/ORM, because if not, I'm buying airfare to strangle someone.
 				return $document->cakefy();
 			}
 
@@ -101,7 +101,7 @@ class Table extends CakeTable {
 		public function delete(EntityInterface $entity, $options = []) {
 			try {
 				$collection = $this->__getCollection();
-				$success = $collection->remove(['_id' => new \MongoId($entity->_id)]);
+				$success = $collection->remove(['_id' => new \MongoId($entity->_id)]); // TODO: No more MongoId either... better rewrite this to use whatever the hell is the equivalent in the new library.
 			} catch (\MongoException $e) {
 				trigger_error($e->getMessage());
 				return false;
@@ -140,7 +140,6 @@ class Table extends CakeTable {
 					$entity->source($this->registryAlias());
 				}
 			}
-
 			return $success;
 		}
 
@@ -166,7 +165,25 @@ class Table extends CakeTable {
 	        $data = $entity->toArray();
 	        $isNew = $entity->isNew();
 
-	        //convert to mongodate
+	        /****************************************************************************
+			 *
+			 * CONVERT TO MONGODATE
+			 *
+			 * So, this is a bit different. The original code looks like it can take a Time
+			 * object (as evidenced by the use of the strtotime() function), but this no longer
+			 * works in MongoDB\BSON\UTCDateTime nor MongoDB\BSON\Timestamp classes.
+			 *
+			 * There are two classes: UTCDateTime and Timestamp. Timestamp has a constructor
+			 * that accepts two parameters, increment and timestamp (both, oddly enough, in integer
+			 * format).
+			 * http://php.net/manual/en/mongodb-bson-timestamp.construct.php
+			 *
+			 * However, UTCDateTime's constructor does not accept a timestamp. It accepts an integer 
+			 * called "milliseconds" in the variable. Milliseconds, as compared to WHAT? Plus, you can
+			 * have only so many milliseconds before the number is too big to be an integer anyway.
+			 * http://php.net/manual/en/class.mongodb-bson-utcdatetime.php
+			 *
+			 ****************************************************************************/
 	        if (isset($data['created'])) {
 	        	$data['created']  = new \MongoDate(strtotime($data['created']->toDateTimeString()));
 	        }
