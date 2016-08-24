@@ -76,7 +76,7 @@ class Mongodb {
 			'key'			=> [
 				'public'	=> '',
 				'private'	=> '',
-				'passphrase'=> '',
+				'passphrase'=> ''
 			]
 		]
 	];
