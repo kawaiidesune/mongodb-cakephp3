@@ -27,8 +27,8 @@ class ResultSet {
 	 * @param string $table
 	 * @access public
 	 */
-		public function __construct(\MongoCursor $cursor, $table) {
-			$this->_results = iterator_to_array($cursor);
+		public function __construct(\MongoDB\Driver\Cursor $cursor, $table) {
+			$this->_results = $cursor->toArray();
 			$this->_table = $table;
 		}
 
@@ -37,6 +37,7 @@ class ResultSet {
 	 * 
 	 * @return []Cake\ORM\Entity $results
 	 * @access public
+	 * @todo Check to see if this toArray function is used elsewhere. It's really not necessary.
 	 */
 		public function toArray() {
 			$results = [];
