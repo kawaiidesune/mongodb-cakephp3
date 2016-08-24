@@ -1,5 +1,4 @@
-<?php 
-
+<?php
 namespace Hayko\Mongodb\ORM;
 
 use Cake\I18n\Time;
@@ -62,7 +61,6 @@ class Document {
 				$document[$field] = $value;
 			}
 		}
-
 		return new Entity($document, ['markClean' => true, 'markNew' => false, 'source' => $this->_registryAlias]);
 	}
 }

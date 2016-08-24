@@ -116,14 +116,14 @@ class Connection implements ConnectionInterface {
 	 * @return boolean
 	 * @access public
 	 */
-		public function connect() {
-			try {
-				$this->_driver->connect();
-				return true;
-			} catch (Exception $e) {
-				throw new MissingConnectionException(['reason' => $e->getMessage()]); // TODO: Where the hell is this object and has it been replaced in the new driver?
-			}
+	public function connect() {
+		try {
+			$this->_driver->connect();
+			return true;
+		} catch (Exception $e) {
+			throw new MissingConnectionException(['reason' => $e->getMessage()]); // TODO: Where the hell is this object and has it been replaced in the new driver?
 		}
+	}
 
 	/**
 	 * disconnect from the database
@@ -131,12 +131,12 @@ class Connection implements ConnectionInterface {
 	 * @return boolean
 	 * @access public
 	 */
-		public function disconnect() {
-			if ($this->_driver->isConnected()) {
-				return $this->_driver->disconnect();
-			}
-			return true;
+	public function disconnect() {
+		if ($this->_driver->isConnected()) {
+			return $this->_driver->disconnect();
 		}
+		return true;
+	}
 
 	/**
 	 * database connection status
@@ -145,9 +145,9 @@ class Connection implements ConnectionInterface {
 	 * @access public
 	 * @todo IF this is unnecessary, send this to the Department of Redundancy Department.
 	 */
-		public function isConnected() {
-			return $this->_driver->isConnected();
-		}
+	public function isConnected() {
+		return $this->_driver->isConnected();
+	}
 
 	/**
 	 * Gets or sets schema collection for this connection
@@ -155,9 +155,9 @@ class Connection implements ConnectionInterface {
 	 * @param $collection
 	 * @return \Hayko\Mongodb\Database\Schema\MongoSchema
 	 */
-		public function schemaCollection($collection = null) {
-			return $this->_schemaCollection = new MongoSchema($this->_driver); // Well, THIS needs to be rewritten.
-		}
+	public function schemaCollection($collection = null) {
+		return $this->_schemaCollection = new MongoSchema($this->_driver); // Well, THIS needs to be rewritten.
+	}
 
 	/**
 	 * Mongo doesn't support transaction

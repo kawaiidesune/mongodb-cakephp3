@@ -1,16 +1,14 @@
 <?php
-
 namespace Hayko\Mongodb\ORM;
 
 class ResultSet {
-
 	/**
 	 * store the convertion of mongo cursor into array
 	 * 
 	 * @var array $_results
 	 * @access protected
 	 */
-		protected $_results;
+	protected $_results;
 
 	/**
 	 * table name
@@ -18,7 +16,7 @@ class ResultSet {
 	 * @var string $_table
 	 * @access protected
 	 */
-		protected $_table;
+	protected $_table;
 
 	/**
 	 * set results and table name
@@ -27,10 +25,10 @@ class ResultSet {
 	 * @param string $table
 	 * @access public
 	 */
-		public function __construct(\MongoDB\Driver\Cursor $cursor, $table) {
-			$this->_results = $cursor->toArray();
-			$this->_table = $table;
-		}
+	public function __construct(\MongoDB\Driver\Cursor $cursor, $table) {
+		$this->_results = $cursor->toArray();
+		$this->_table = $table;
+	}
 
 	/**
 	 * convert mongo documents in cake entitys
@@ -39,14 +37,12 @@ class ResultSet {
 	 * @access public
 	 * @todo Check to see if this toArray function is used elsewhere. It's really not necessary.
 	 */
-		public function toArray() {
-			$results = [];
-			foreach ($this->_results as $result) {
-				$document = new Document($result, $this->_table);
-				$results[] = $document->cakefy();
-			}
-
-			return $results;
+	public function toArray() {
+		$results = [];
+		foreach ($this->_results as $result) {
+			$document = new Document($result, $this->_table);
+			$results[] = $document->cakefy();
 		}
-
+		return $results;
+	}
 }

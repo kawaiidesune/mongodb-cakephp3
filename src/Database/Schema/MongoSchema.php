@@ -1,5 +1,4 @@
 <?php
-
 namespace Hayko\Mongodb\Database\Schema;
 
 use Hayko\Mongodb\Database\Driver\Mongodb;
@@ -28,6 +27,9 @@ class MongoSchema {
 	/**
 	 * Describe
 	 *
+	 * Apparently, the original author of this function failed to describe what this
+	 * function does. How very à propos...
+	 *
 	 * @access public
 	 */
 	public function describe($name, array $options = []) {
@@ -35,14 +37,12 @@ class MongoSchema {
 		if (strpos($name, '.')) {
 			list($config['schema'], $name) = explode('.', $name);
 		}
-
 		$table = new Table(['table' => $name]);
 
 		if(empty($table->primaryKey())) {
-			$table->addColumn('_id', ['type' => 'string', 'default' => new \MongoId(), 'null' => false]);
+			$table->addColumn('_id', ['type' => 'string', 'default' => new \MongoDB\Driver\ObjectId(), 'null' => false]);
 			$table->addConstraint('_id', ['type' => 'primary', 'columns' => ['_id']]);
 		}
-
 		return $table;
 	}
 }
