@@ -18,55 +18,58 @@ class Connection implements ConnectionInterface {
 	/**
 	 * Contains the configuration param for this connection
 	 * 
+	 * @access protected
 	 * @var array
 	 */
-	 	protected $_config;	
+	 protected $_config;	
 
 	/**
 	 * Database Driver object
 	 *
-	 * @var resource
 	 * @access protected
+	 * @var resource
 	 */
-		protected $_driver = null;
+	protected $_driver = null;
 
 	 /**
      * Whether to log queries generated during this connection.
      *
+     * @access protected
      * @var bool
      */
-    	protected $_logQueries = false;
+    protected $_logQueries = false;
 
     /**
      * Logger object instance.
      *
+     * @access protected
      * @var \Cake\Database\Log\QueryLogger
      */
-    	protected $_logger = null;
+    protected $_logger = null;
 
 	/**
 	 * MongoSchema
 	 * 
-	 * @var MongoSchema
 	 * @access protected
+	 * @var MongoSchema
 	 */
-		protected $_schemaCollection;
+	protected $_schemaCollection;
 
 	/**
 	 * creates a new connection with mongodb
 	 * 
-	 * @param array $config
 	 * @access public
+	 * @param array $config
 	 * @return bool
 	 */
-		public function __construct($config) {
-			$this->_config = $config;
-			$this->driver('mongodb', $config);
+	public function __construct(array $config) {
+		$this->_config = $config;
+		$this->driver('mongodb', $config);
 
-			if (!empty($config['log'])) {
-	            $this->logQueries($config['log']);
-	        }
-		}
+		if (!empty($config['log'])) {
+            $this->logQueries($config['log']);
+        }
+	}
 
 	/**
 	 * disconnect existent connection
@@ -74,18 +77,18 @@ class Connection implements ConnectionInterface {
 	 * @access public
 	 * @return void
 	 */
-		public function __destruct() {
-			if ($this->_driver->connected) {
-				$this->_driver->disconnect();
-				unset($this->_driver);
-			}
+	public function __destruct() {
+		if ($this->_driver->connected) {
+			$this->_driver->disconnect(); // However, the new PHP MongoDB library uses a lazy way to connect.
+			unset($this->_driver);
 		}
+	}
 
 	/**
 	 * return configuration
 	 * 
-	 * @return array $_config
 	 * @access public
+	 * @return array $_config
 	 */
 		public function config() {
 			return $this->_config;
@@ -94,8 +97,8 @@ class Connection implements ConnectionInterface {
 	/**
 	 * return configuration name
 	 * 
-	 * @return string
 	 * @access public
+	 * @return string
 	 */
 	public function configName() {
 		return 'mongodb'; // Seriously? A function to return a string?
@@ -113,10 +116,11 @@ class Connection implements ConnectionInterface {
 	}
 
 	/**
-	 * connect to the database
+	 * Connect to the database
 	 * 
-	 * @return boolean
 	 * @access public
+	 * @return boolean
+	 * @throws MissingConnectionException If the driver cannot connect, then it throws this.
 	 */
 	public function connect() {
 		try {
@@ -128,10 +132,11 @@ class Connection implements ConnectionInterface {
 	}
 
 	/**
-	 * disconnect from the database
+	 * Disconnect from the database
 	 * 
-	 * @return boolean
 	 * @access public
+	 * @return boolean
+	 * @todo Determine if this is required by CakePHP in order to function, as the new MongoDB PHP library connects lazily.
 	 */
 	public function disconnect() {
 		if ($this->_driver->isConnected()) {
@@ -143,9 +148,10 @@ class Connection implements ConnectionInterface {
 	/**
 	 * database connection status
 	 * 
-	 * @return booelan
 	 * @access public
+	 * @return bool
 	 * @todo IF this is unnecessary, send this to the Department of Redundancy Department.
+	 * @uses Mongodb::isConnected()
 	 */
 	public function isConnected() {
 		return $this->_driver->isConnected();
@@ -164,8 +170,8 @@ class Connection implements ConnectionInterface {
 	/**
 	 * Mongo doesn't support transaction
 	 * 
-	 * @return false
 	 * @access public
+	 * @return false
 	 */
 	public function transactional(callable $transaction) {
 		return false;
@@ -174,8 +180,8 @@ class Connection implements ConnectionInterface {
 	/**
 	 * Mongo doesn't support foreign keys
 	 * 
-	 * @return false
 	 * @access public
+	 * @return false
 	 */
 	public function disableConstraints(callable $operation) {
 		return false;
@@ -185,6 +191,7 @@ class Connection implements ConnectionInterface {
 	 * 
 	 * @access public
 	 * @return 
+	 * @todo Figure out what the hell this function does and document it.
 	 */
 	public function logQueries($enable = null) {
 		if ($enable === null) {
@@ -194,12 +201,12 @@ class Connection implements ConnectionInterface {
 	}
 
 	/**
-	 * 
+	 * @access public
 	 */
 	public function logger($instance = null) {
 		if ($instance === null) {
             if ($this->_logger === null) {
-                $this->_logger = new QueryLogger; // TODO: Is this a new object or is this native to CakePHP.
+                $this->_logger = new QueryLogger;
             }
             return $this->_logger;
         }
@@ -209,6 +216,7 @@ class Connection implements ConnectionInterface {
 	/**
      * Logs a Query string using the configured logger object.
      *
+     * @access public
      * @param string $sql string to be logged
      * @return void
      */

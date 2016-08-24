@@ -13,33 +13,34 @@ class MongoQuery {
 	/**
 	 * set results
 	 * 
-	 * @var array $_results
 	 * @access protected
 	 * @used-by MongoQuery::__construct()
 	 * @used-by MongoQuery::all()
+	 * @var array $_results
 	 */
 	protected $_results;
 
 	/**
 	 * set number of rows
 	 * 
-	 * @var int $_rows
 	 * @access protected
 	 * @used-by MongoQuery::__construct()
 	 * @used-by MongoQuery::count()
+	 * @var int $_rows
 	 */
 	protected $_rows;
 
 	/**
 	 * set the results and number of rows
 	 * 
+	 * @access public
 	 * @param array $results
 	 * @param int $rows
-	 * @access public
+	 * @used-by Table::find()
 	 * @uses MongoQuery::_results
 	 * @uses MongoQuery::_rows
 	 */
-	public function __construct($results, $rows) {
+	public function __construct(array $results, int $rows) {
 		$this->_results = $results;
 		$this->_rows = $rows;
 	}
@@ -47,8 +48,8 @@ class MongoQuery {
 	/**
 	 * return array with results
 	 * 
-	 * @return array
 	 * @access public
+	 * @return array
 	 * @uses MongoQuery::_results
 	 */
 	public function all() {
@@ -62,8 +63,8 @@ class MongoQuery {
 	 * It seems to defy DRY principles to not have the code in this class already, either in the 
 	 * constructor or in here...
 	 * 
-	 * @return int
 	 * @access public
+	 * @return int
 	 * @uses MongoQuery::_rows Again, as I said, this function appears to be a proxy to publicly access $this->_rows, but why bother?
 	 */
 	public function count() {

@@ -19,57 +19,55 @@ use MongoDB\BSON\ObjectID;
 use RuntimeException;
 
 class Table extends CakeTable {
-
 	/**
 	 * return MongoCollection object
 	 * 
-	 * @return MongoDB\Driver\Cursor
 	 * @access private
+	 * @return MongoDB\Driver\Cursor
+	 * @used-by Table::_update()
 	 */
 	private function __getCollection() {
 		$driver = $this->connection()->driver();
         $collection = $driver->getCollection($this->table());
-
         return $collection;
 	}
 
 	/**
 	 * always return true because mongo is schemaless
 	 * 
+	 * @access public
 	 * @param string $field
 	 * @return bool
-	 * @access public
 	 */
-	public function hasField($field) {
+	public function hasField(string $field) {
 		return true;
 	}
 
 	/**
 	 * find documents
 	 * 
-	 * @param string $type
-	 * @param array $options
-	 * @return MongoQuery|Cake\ORM\Entity
 	 * @access public
+	 * @param array $options
+	 * @param string $type
+	 * @return MongoQuery|Cake\ORM\Entity
+	 * @throws BadMethodCallException If the method defined in $query and $method doesn't exist.
 	 * @uses MongoFinder::__construct()
 	 * @uses MongoQuery::__construct()
 	 * @uses ResultSet::__construct()
 	 * @uses ResultSet::toArray()
 	 */
-	public function find($type = 'all', $options = []) {
-		$query = new MongoFinder($this->__getCollection(), $options); // TODO: This makes no sense. Why feed a MongoDB\Driver\Cursor object into a function where a CONNECTION is supposed to be?
+	public function find(string $type = 'all', array $options = []) {
+		$query = new MongoFinder($this->__getCollection(), $options);
 		$method = 'find' . ucfirst($type);
 		if (method_exists($query, $method)) {
 			$mongoCursor = $query->{$method}();
 			$results = new ResultSet($mongoCursor, $this->alias());
-
 			if (isset($options['whitelist'])) {
 				return new MongoQuery($results->toArray(), $query->count()); // Rewrite Query
 			} else {
 				return $results->toArray();
 			}
 		}
-
 		throw new BadMethodCallException(
             sprintf('Unknown method "%s"', $method)
         );
@@ -78,16 +76,16 @@ class Table extends CakeTable {
 	/**
 	 * get the document by _id
 	 * 
+	 * @access public
 	 * @param string $primaryKey
 	 * @param array $options
 	 * @return Cake\ORM\Entity
-	 * @access public
 	 * @uses Document::__construct()
 	 * @uses Document::cakefy()
 	 * @uses MongoFinder::__construct()
 	 * @uses MongoFinder::get()
 	 */
-	public function get($primaryKey, $options = []) {
+	public function get(string $primaryKey, array $options = []) {
 		$query = new MongoFinder($this->__getCollection(), $options);
 		$mongoCursor = $query->get($primaryKey);
 
@@ -105,19 +103,20 @@ class Table extends CakeTable {
 	}
 
 	/**
-	 * remove one document
+	 * Remove a single document
 	 * 
+	 * @access public
 	 * @param Cake\Datasource\EntityInterface $entity
 	 * @param array $options
-	 * @return bool
-	 * @access public
+	 * @return bool If the function successfully removes the entity, it returns true. If not, it returns false.
+	 * @since 0.1-dev The try catch function used to be typecast as MongoException, but I removed it given how many Mongo Exceptions were created in the new API. Not sure what the impact will be of NOT typecasting it, but it's important to note.
 	 * @uses \MongoDB\BSON\ObjectId::__construct()
 	 */
-	public function delete(EntityInterface $entity, $options = []) {
+	public function delete(Cake\Datasource\EntityInterface $entity, array $options = []) {
 		try {
 			$collection = $this->__getCollection();
 			$success = $collection->remove(['_id' => new \MongoDB\BSON\ObjectId($entity->_id)]);
-		} catch (\MongoException $e) {
+		} catch ($e) {
 			trigger_error($e->getMessage());
 			return false;
 		}
@@ -127,14 +126,15 @@ class Table extends CakeTable {
 	/**
 	 * save the document
 	 * 
+	 * @access public
 	 * @param \Cake\ORM\Entity $entity
 	 * @param array $options
 	 * @return mixed $success
-	 * @access public
+	 * @since 0.1-dev This was typecast as an EntityInterface in the function but declared to be \Cake\ORM\Entity in the PHPDoc. Not sure which is valid.
 	 * @uses ArrayObject::__construct()
 	 * @uses \MongoDB\BSON\UTCDateTime()
 	 */
-	public function save(EntityInterface $entity, $options = []) {
+	public function save(\Cake\ORM\Entity $entity, array $options = []) {
 		$options = new ArrayObject($options + [
             'checkRules' => true,
             'checkExisting' => true,
@@ -149,7 +149,7 @@ class Table extends CakeTable {
 			return $entity;
 		}
 
-		$success = $this->_processSave($entity, $options);
+		$success = $this->_processSave($entity, $options); // What does this return? A boolean? Or is it a mixed value?
 		if ($success) {
 			if ($options['_primary']) {
 				$this->dispatchEvent('Model.afterSaveCommit', compact('entity', 'options'));
@@ -161,14 +161,14 @@ class Table extends CakeTable {
 	}
 
 	/**
-	 * insert or update the document
+	 * Insert or update the document
 	 * 
+	 * @access protected
 	 * @param \Cake\ORM\Entity $entity
 	 * @param array $options
 	 * @return mixed $success
-	 * @access protected
 	 */
-	protected function _processSave($entity, $options) {
+	protected function _processSave(\Cake\ORM\Entity $entity, array $options) {
 		$mode = $entity->isNew() ? RulesChecker::CREATE : RulesChecker::UPDATE;
         if ($options['checkRules'] && !$this->checkRules($entity, $mode, $options)) {
             return false;
@@ -183,10 +183,10 @@ class Table extends CakeTable {
         $isNew = $entity->isNew();
 
         if (isset($data['created'])) {
-        	$data['created']  = new \MongoDB\BSON\UTCDateTime(strtotime($data['created']->toDateTimeString())); // TODO: Convert to Unix epoch
+        	$data['created']  = new \MongoDB\BSON\UTCDateTime(strtotime($data['created']->toDateTimeString())); // TODO: Convert to Unix epoch, if necessary.
         }
         if (isset($data['modified'])) {
-        	$data['modified'] = new \MongoDB\BSON\UTCDateTime(strtotime($data['modified']->toDateTimeString())); // TODO: Convert to Unix epoch
+        	$data['modified'] = new \MongoDB\BSON\UTCDateTime(strtotime($data['modified']->toDateTimeString())); // TODO: Convert to Unix epoch, if necessary.
         }
 
         if ($isNew) {
@@ -202,7 +202,6 @@ class Table extends CakeTable {
                 $entity->isNew(false);
                 $entity->source($this->registryAlias());
             }
-
             $success = true;
         }
 
@@ -224,8 +223,10 @@ class Table extends CakeTable {
 	 * @param array $data
 	 * @return mixed $success
 	 * @access protected
+	 * @throws RunTimeException if $this->primaryKey() as assigned to $primary is an empty array.
+	 * @uses Table::_newId()
 	 */
-	protected function _insert($entity, $data) {
+	protected function _insert(\Cake\ORM\Entity $entity, array $data) {
 		$primary = (array)$this->primaryKey();
 		if (empty($primary)) {
             $msg = sprintf(
@@ -264,15 +265,16 @@ class Table extends CakeTable {
 	 * @return mixed $success
 	 * @access protected
 	 * @uses \MongoDB\BSON\ObjectId::__construct()
+	 * @uses Table::__getCollection()
 	 */
-	protected function _update($entity, $data) {
+	protected function _update(\Cake\ORM\Entity $entity, array $data) {
 		unset($data['_id']);
 
 		$success = $entity;
         $collection = $this->__getCollection();
 
         if (is_object($collection)) {
-        	$r = $collection->update(['_id' => new \MongoDB\BSON\ObjectId($entity->_id)], $data);
+        	$r = $collection->update(['_id' => new \MongoDB\BSON\ObjectId($entity->_id)], $data); // TODO: Check to see if this is taking the correct parameters in the ObjectId constructor.
         	if ($r['ok'] == false) {
         		$success = false;
         	}
@@ -283,9 +285,10 @@ class Table extends CakeTable {
 	/**
 	 * create new MongoId
 	 * 
+	 * @access protected
 	 * @param mixed $primary
 	 * @return \MongoDB\BSON\ObjectID()
-	 * @access public
+	 * @used-by Table::_insert()
 	 * @uses MongoDB\BSON\ObjectID::__construct()
 	 */
 	protected function _newId($primary) {

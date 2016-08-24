@@ -34,14 +34,15 @@ class Document {
 	/**
 	 * set document and table name
 	 * 
+	 * @access public
 	 * @param array $document
 	 * @param string $table
-	 * @access public
+	 * @used-by ResultSet::toArray()
+	 * @used-by Table::get()
 	 * @uses Document::_document Sets Document::_document to the $document array passed to it.
 	 * @uses Document::_registryAlias Apparently, it sets _registryAlias to the table model name that was supplied.
-	 * @used-by ResultSet::toArray()
 	 */
-	public function __construct(Array $document, $table) {
+	public function __construct(Array $document, string $table) {
 		$this->_document = $document;
 		$this->_registryAlias = $table;
 	}
@@ -49,11 +50,13 @@ class Document {
 	/**
 	 * convert mongo document into cake entity
 	 * 
-	 * @return Cake\ORM\Entity
 	 * @access public
+	 * @return Cake\ORM\Entity
+	 * @throws Exception if the 'object' type is not a member of the \MongoDB\BSON\ObjectID class or the \MongoDB\BSON\UTCDateTime class...
+	 * @used-by ResultSet::toArray()
+	 * @used-by Table::get()
 	 * @uses Document::_document
 	 * @uses Document::cakefy() Almost recursively...
-	 * @used-by ResultSet::toArray()
 	 */
 	public function cakefy() {
 		// The thing is, we need to make sure that this code still works and, if it does, to 

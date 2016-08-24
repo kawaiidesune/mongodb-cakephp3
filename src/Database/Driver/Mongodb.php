@@ -25,27 +25,27 @@ class Mongodb {
 	/**
 	 * Config
 	 * 
-	 * @var array
 	 * @access private
 	 * @todo What the fuck is this shit? Don't we define this stuff in app.php? Why use it here too?
+	 * @var array
 	 */
 	private $_config;
 
 	/**
 	 * Database Instance
 	 *
-	 * @var resource
 	 * @access protected
 	 * @todo This looks pretty vestigal too.
+	 * @var resource
 	 */
 	protected $_db = null;
 
 	/**
 	 * Mongo Driver Version
 	 *
-	 * @var string
 	 * @access protected
 	 * @todo This seems redundant as hell. Seriously, if we can use the constant throughout the programme, it might be wise to axe this.
+	 * @var string
 	 */
 	protected $_driverVersion = MONGODB_VERSION;
 
@@ -53,11 +53,11 @@ class Mongodb {
 	 * Base Config
 	 *
 	 * set_string_id:
-	 *    true: In read() method, convert MongoId object to string and set it to array 'id'.
+	 *    true: In read() method, convert \MongoDB\BSON\ObjectId object to string and set it to array 'id'.
 	 *    false: not convert and set.
 	 *
+	 * @access protected
 	 * @var array
-	 * @access public
 	 */
 	protected $_baseConfig = [
 		'set_string_id'		=> true,
@@ -84,13 +84,14 @@ class Mongodb {
 	/**
 	 * Direct connection with database
 	 *
-	 * @var mixed null | Mongo
 	 * @access private
+	 * @todo Re-evaluate the statement in var, as this cannot hold a Mongo datatype as it shouldn't exist in the new MongoDB PHP library.
+	 * @var mixed null | Mongo
 	 */
 	private $connection = null;
 
 	/**
-	 * 
+	 * @access public
 	 */
 	public function __construct($config) {
 		$this->_config = $config;
@@ -99,8 +100,8 @@ class Mongodb {
 	/**
 	 * return configuration
 	 * 
-	 * @return array
 	 * @access public
+	 * @return array
 	 */
 	public function config() {
 		return $this->_config;
@@ -109,8 +110,8 @@ class Mongodb {
 	/**
 	 * connect to the database
 	 * 
-	 * @return boolean
 	 * @access public
+	 * @return bool
 	 */
 	public function connect() {
 		try {
@@ -184,7 +185,6 @@ class Mongodb {
 			if ($this->connection->executeCommand($this->_config['database'], $serverStatus)) {
 				$this->connected = true;
 			}
-
 		} catch ($e) { // The data in this catch() function is not only the wrong type for the new driver, MongoExceptions are divided in the new documentation.
 			/****************************************************************************
 			 *
@@ -240,10 +240,10 @@ class Mongodb {
 
 	/**]
 	 * 
+	 * @access public
 	 * @param string $collectionName
 	 * @return MongoDB\Driver\Cursor|bool If it can't select the collection, it SHOULD return false. If it can, it SHOULD return the MongoDB\Driver\Cursor object.
 	 * @todo Determine whether this is necessary, as MongoDB\Driver\Manager does not have a means to select the collection and every collection is namespaced anyway.
-	 * @access public
 	 */
 	public function getCollection($collectionName = '') {
 		if (!empty($collectionName)) {
@@ -261,8 +261,8 @@ class Mongodb {
 	/**
 	 * disconnect from the database
 	 * 
-	 * @return boolean
 	 * @access public
+	 * @return bool
 	 * @todo Find out if this is required by any other method, and if not, remove it (per the documentation at https://github.com/alcaeus/mongo-php-adapter)
 	 */
 	public function disconnect() {
@@ -277,9 +277,10 @@ class Mongodb {
 	/**
 	 * database connection status
 	 * 
-	 * @return booelan
 	 * @access public
+	 * @return bool
 	 * @todo Make this interactive and GET RID OF $this->connected as a variable.
+	 * @used-by Connection::isConnected()
 	 */
 	public function isConnected() {
 		return $this->connected;

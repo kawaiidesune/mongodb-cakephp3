@@ -9,43 +9,45 @@ namespace Hayko\Mongodb\ORM;
 
 class ResultSet {
 	/**
-	 * store the convertion of mongo cursor into array
+	 * Store the conversion of mongo cursor into array
 	 * 
-	 * @var array $_results
 	 * @access protected
 	 * @used-by ResultSet::__construct()
+	 * @var array $_results
 	 */
 	protected $_results;
 
 	/**
-	 * table name
+	 * Table name
 	 * 
-	 * @var string $_table
 	 * @access protected
 	 * @used-by ResultSet::__construct()
+	 * @var string $_table
 	 */
 	protected $_table;
 
 	/**
-	 * set results and table name
+	 * Set results and table name
 	 * 
-	 * @param \MongoCursor $cursor
-	 * @param string $table
 	 * @access public
+	 * @param \MongoDB\Driver\Cursor $cursor
+	 * @param string $table
+	 * @used-by Table::find()
 	 * @uses ResultSet::_results
 	 * @uses ResultSet::_table
 	 */
-	public function __construct(\MongoDB\Driver\Cursor $cursor, $table) {
+	public function __construct(\MongoDB\Driver\Cursor $cursor, string $table) {
 		$this->_results = $cursor->toArray();
 		$this->_table = $table;
 	}
 
 	/**
-	 * convert mongo documents in cake entitys
+	 * Convert mongo documents in cake entities
 	 * 
-	 * @return []Cake\ORM\Entity $results
 	 * @access public
+	 * @return []Cake\ORM\Entity $results
 	 * @todo Check to see if this toArray function is used elsewhere. It's really not necessary.
+	 * @used-by Table::find()
 	 * @uses Document::__construct()
 	 * @uses Document::cakefy()
 	 */

@@ -36,22 +36,25 @@ class MongoFinder {
 	/**
 	 * total number of rows
 	 * 
-	 * @var int $_totalRows
 	 * @access protected
 	 * @used-by MongoFinder::count()
 	 * @used-by MongoFinder::find()
+	 * @var int $_totalRows
 	 */
 	protected $_totalRows;
 
 	/**
 	 * set connection and options to find
 	 * 
+	 * @access public
 	 * @param Mongo $connection
 	 * @param array $options
-	 * @access public
+	 * @used-by Table::find()
+	 * @used-by Table::get()
 	 * @uses MongoFinder::_options
+	 * @uses MongoFinder::connection()
 	 */
-	public function __construct($connection, $options = []) {
+	public function __construct($connection, array $options = []) {
 		$this->connection($connection);
 		$this->_options = array_merge_recursive($this->_options, $options);
 
@@ -69,9 +72,11 @@ class MongoFinder {
 	/**
 	 * connection
 	 * 
+	 * @access public
 	 * @param Mongo $connection
 	 * @return Mongo
-	 * @access public
+	 * @todo Update documentation with ACTUAL return type, seeing as Mongo is from the old class...
+	 * @used-by MongoFinder::__construct()
 	 * @uses MongoFinder::_connection
 	 */
 	public function connection($connection = null) {
@@ -85,11 +90,11 @@ class MongoFinder {
 	/**
 	 * remove model name from the key
 	 * 
-	 * example: Categories.name -> name
-	 * @param array $data
 	 * @access private
+	 * @example Categories.name -> name
+	 * @param array $data
 	 */
-	private function __normalizeFieldsName(&$data) {
+	private function __normalizeFieldsName(array &$data) {
 		foreach ($data as $key => &$value) {
 			if (is_array($value)) {
 				$this->__normalizeFieldsName($value);
@@ -103,7 +108,7 @@ class MongoFinder {
 	}
 
 	/**
-	 * convert sql conditions into mongodb conditions
+	 * Convert sql conditions into mongodb conditions
 	 * 
 	 * '!=' => '$ne',
 	 * '>' => '$gt',
@@ -114,11 +119,14 @@ class MongoFinder {
 	 * 'NOT' => '$not',
 	 * 'NOT IN' => '$nin'
 	 * 
-	 * @param array $conditions
+	 * NOTE: This function may be one of the most borked. In testing, it may be a good idea to check it.
+	 * 
 	 * @access private
+	 * @param array $conditions
+	 * @return array $conditions
 	 * @uses \MongoDB\BSON\Regex::__construct()
 	 */
-	private function __translateConditions(&$conditions) {
+	private function __translateConditions(array &$conditions) {
 		foreach ($conditions as $key => &$value) {
 			$uKey = strtoupper($key);
 			if (substr($uKey, -6) === 'NOT IN') {
@@ -133,7 +141,7 @@ class MongoFinder {
 				unset($conditions[$key]);
 				foreach($value as $key => $part) {
 					$part = array($key => $part);
-					$this->__translateConditions($Model, $part);
+					$this->__translateConditions($Model, $part); // This one use two underscores "__" instead of "_".
 					$conditions['$or'][] = $part;
 				}
 				continue;
@@ -155,7 +163,7 @@ class MongoFinder {
 				continue;
 			}
 			if (is_numeric($key) && is_array($value)) {
-				if ($this->_translateConditions($Model, $value)) {
+				if ($this->_translateConditions($Model, $value)) { // And this uses one, instead of two. Unlike the one above.
 					continue;
 				}
 			}
@@ -193,7 +201,13 @@ class MongoFinder {
 				}
 				$value = str_replace('%', '.*', $value);
 
-				$conditions[substr($key, 0, -5)] = new \MongoDB\BSON\Regex("/$value/i"); // TODO: Unlike MongoRegex in the old driver, MongoDB\BSON\Regex actually requires two parameters in the constructor, $pattern and $flags. We're passing the patterns but I wonder if we need to modify this to take flags into account... (Relevant PHP Documentation: http://php.net/manual/en/mongodb-bson-regex.construct.php )
+				$conditions[substr($key, 0, -5)] = new \MongoDB\BSON\Regex("$value", "i");
+				/* TODO: Unlike MongoRegex in the old driver, MongoDB\BSON\Regex actually requires two parameters in the constructor, $pattern and $flags.
+				 * We're passing the patterns but I wonder if we need to modify this to take flags into account...
+				 * (Relevant PHP Documentation: http://php.net/manual/en/mongodb-bson-regex.construct.php ).
+				 *
+				 * This solution might work: http://stackoverflow.com/questions/11250600/regex-mongodb-php-query
+				 */
 				unset($conditions[$key]);
 			}
 			if (!in_array(substr($key, -1), array('>', '<', '='))) {
@@ -218,13 +232,14 @@ class MongoFinder {
 	/**
 	 * try to find documents
 	 * 
-	 * @return MongoCursor $cursor
 	 * @access public
-	 * @uses MongoFinder::_options
-	 * @uses MongoFinder::_totalRows
+	 * @return MongoCursor $cursor
+	 * @todo Update documentation with ACTUAL return value, seeing as MongoCursor is from the old class...
 	 * @used-by MongoFinder::findAll()
 	 * @used-by MongoFinder::findList()
 	 * @used-by MongoFinder::get()
+	 * @uses MongoFinder::_options
+	 * @uses MongoFinder::_totalRows
 	 */
 	public function find() {
 		$cursor = $this->connection()->find($this->_options['where'], $this->_options['fields']);
@@ -253,8 +268,10 @@ class MongoFinder {
 	/**
 	 * return all documents
 	 * 
-	 * @return MongoCursor
 	 * @access public
+	 * @return MongoCursor
+	 * @todo Determine whether or not this function is necessary, because if not, it should be deleted.
+	 * @todo Update documentation with ACTUAL return value, seeing as MongoCursor is from the old class...
 	 * @uses MongoFinder::find() ... But, why bother? It looks like it is just a proxy for calling MongoFinder::find() with no parameters...
 	 */
 	public function findAll() {
@@ -264,8 +281,10 @@ class MongoFinder {
 	/**
 	 * return all documents
 	 * 
-	 * @return MongoCursor
 	 * @access public
+	 * @return MongoCursor
+	 * @todo Determine whether or not this function is necessary, because if not, it should be deleted.
+	 * @todo Update documentation with ACTUAL return value, seeing as MongoCursor is from the old class...
 	 * @uses MongoFinder::find() ... But, why bother? It looks like it is just a proxy for calling MongoFinder::find() with no parameters...
 	 */
 	public function findList() {
@@ -275,14 +294,15 @@ class MongoFinder {
 	/**
 	 * return document with _id = $primaKey
 	 * 
+	 * @access public
 	 * @param string $primaryKey
 	 * @return MongoCursor
-	 * @access public
+	 * @todo Update documentation with ACTUAL return value, seeing as MongoCursor is from the old class...
 	 * @uses \MongoDB\BSON\ObjectId::__construct()
 	 * @uses MongoFinder::_options
 	 * @uses MongoFinder::find()
 	 */
-	public function get($primaryKey) {
+	public function get(string $primaryKey) {
 		$this->_options['where']['_id'] = new \MongoDB\BSON\ObjectId($primaryKey);
 		return $this->find();
 	}
