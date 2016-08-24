@@ -27,6 +27,7 @@ class Mongodb {
 	 * 
 	 * @access private
 	 * @todo What the fuck is this shit? Don't we define this stuff in app.php? Why use it here too?
+	 * @used-by Mongodb::__construct()
 	 * @var array
 	 */
 	private $_config;
@@ -92,6 +93,7 @@ class Mongodb {
 
 	/**
 	 * @access public
+	 * @uses Mongodb::_config()
 	 */
 	public function __construct($config) {
 		$this->_config = $config;
