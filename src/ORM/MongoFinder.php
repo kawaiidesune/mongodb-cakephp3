@@ -1,4 +1,10 @@
 <?php
+/**
+ * @author Véronique Bellamy <v@vero.moe>
+ * @license MIT
+ *
+ * @since 0.1-dev
+ */
 namespace Hayko\Mongodb\ORM;
 
 use Cake\Datasource\EntityInterface;
@@ -9,6 +15,7 @@ class MongoFinder {
 	 * 
 	 * @var Mongo $_connection
 	 * @access protected
+	 * @used-by MongoFinder::connection()
 	 */
 	protected $_connection;
 
@@ -17,6 +24,9 @@ class MongoFinder {
 	 * 
 	 * @var array $_options
 	 * @access protected
+	 * @used-by MongoFinder::__construct()
+	 * @used-by MongoFinder::find()
+	 * @used-by MongoFinder::get()
 	 */
 	protected $_options = [
 		'fields' => [],
@@ -28,6 +38,8 @@ class MongoFinder {
 	 * 
 	 * @var int $_totalRows
 	 * @access protected
+	 * @used-by MongoFinder::count()
+	 * @used-by MongoFinder::find()
 	 */
 	protected $_totalRows;
 
@@ -37,6 +49,7 @@ class MongoFinder {
 	 * @param Mongo $connection
 	 * @param array $options
 	 * @access public
+	 * @uses MongoFinder::_options
 	 */
 	public function __construct($connection, $options = []) {
 		$this->connection($connection);
@@ -59,6 +72,7 @@ class MongoFinder {
 	 * @param Mongo $connection
 	 * @return Mongo
 	 * @access public
+	 * @uses MongoFinder::_connection
 	 */
 	public function connection($connection = null) {
 		if ($connection === null) {
@@ -102,6 +116,7 @@ class MongoFinder {
 	 * 
 	 * @param array $conditions
 	 * @access private
+	 * @uses \MongoDB\BSON\Regex::__construct()
 	 */
 	private function __translateConditions(&$conditions) {
 		foreach ($conditions as $key => &$value) {
@@ -197,7 +212,6 @@ class MongoFinder {
 				}
 			}
 		}
-
 		return $conditions;
 	}
 
@@ -206,6 +220,11 @@ class MongoFinder {
 	 * 
 	 * @return MongoCursor $cursor
 	 * @access public
+	 * @uses MongoFinder::_options
+	 * @uses MongoFinder::_totalRows
+	 * @used-by MongoFinder::findAll()
+	 * @used-by MongoFinder::findList()
+	 * @used-by MongoFinder::get()
 	 */
 	public function find() {
 		$cursor = $this->connection()->find($this->_options['where'], $this->_options['fields']);
@@ -216,7 +235,6 @@ class MongoFinder {
 				foreach ($this->_options['order'] as $field => $direction) {
 					$sort[$field] = $direction == 'asc' ? 1 : -1;
 				}
-
 				$cursor->sort($sort);
 			}
 
@@ -236,7 +254,8 @@ class MongoFinder {
 	 * return all documents
 	 * 
 	 * @return MongoCursor
-	 * @access public	 
+	 * @access public
+	 * @uses MongoFinder::find() ... But, why bother? It looks like it is just a proxy for calling MongoFinder::find() with no parameters...
 	 */
 	public function findAll() {
 		return $this->find();
@@ -247,6 +266,7 @@ class MongoFinder {
 	 * 
 	 * @return MongoCursor
 	 * @access public
+	 * @uses MongoFinder::find() ... But, why bother? It looks like it is just a proxy for calling MongoFinder::find() with no parameters...
 	 */
 	public function findList() {
 		return $this->find();
@@ -258,6 +278,9 @@ class MongoFinder {
 	 * @param string $primaryKey
 	 * @return MongoCursor
 	 * @access public
+	 * @uses \MongoDB\BSON\ObjectId::__construct()
+	 * @uses MongoFinder::_options
+	 * @uses MongoFinder::find()
 	 */
 	public function get($primaryKey) {
 		$this->_options['where']['_id'] = new \MongoDB\BSON\ObjectId($primaryKey);
@@ -269,6 +292,7 @@ class MongoFinder {
 	 * 
 	 * @return int
 	 * @access public
+	 * @uses MongoFinder::_totalRows
 	 */
 	public function count() {
 		return $this->_totalRows;

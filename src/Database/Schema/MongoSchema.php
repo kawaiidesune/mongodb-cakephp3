@@ -1,4 +1,10 @@
 <?php
+/**
+ * @author Véronique Bellamy <v@vero.moe>
+ * @license MIT
+ *
+ * @since 0.1-dev
+ */
 namespace Hayko\Mongodb\Database\Schema;
 
 use Hayko\Mongodb\Database\Driver\Mongodb;
@@ -10,6 +16,8 @@ class MongoSchema {
 	 *
 	 * @var resource
 	 * @access protected
+	 * @used-by MongoSchema::__construct()
+	 * @used-by MongoSchema::describe()
 	 */
 	protected $_connection = null;
 
@@ -19,6 +27,7 @@ class MongoSchema {
 	 * @param ConnectionInterface $conn
 	 * @return void
 	 * @access public
+	 * @uses MongoSchema::_connection
 	 */
 	public function __construct(Mongodb $conn) {
 		$this->_connection = $conn;
@@ -31,6 +40,13 @@ class MongoSchema {
 	 * function does. How very à propos...
 	 *
 	 * @access public
+	 * @return Table $table
+	 * @uses \MongoDB\Driver\ObjectId::construct()
+	 * @uses MongoSchema::_connection
+	 * @uses Table::__construct()
+	 * @uses Table::addColumn() Which is apparently inherited from Cake\ORM\Table
+	 * @uses Table::addConstraint() Which is also inherited from Cake\ORM\Table
+	 * @uses Table::primaryKey() Which, I assume, is also inherited from Cake\ORM\Table
 	 */
 	public function describe($name, array $options = []) {
 		$config = $this->_connection->config();

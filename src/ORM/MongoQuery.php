@@ -1,4 +1,10 @@
 <?php
+/**
+ * @author Véronique Bellamy <v@vero.moe>
+ * @license MIT
+ *
+ * @since 0.1-dev
+ */
 namespace Hayko\Mongodb\ORM;
 
 use Cake\Datasource\EntityInterface;
@@ -9,6 +15,8 @@ class MongoQuery {
 	 * 
 	 * @var array $_results
 	 * @access protected
+	 * @used-by MongoQuery::__construct()
+	 * @used-by MongoQuery::all()
 	 */
 	protected $_results;
 
@@ -17,6 +25,8 @@ class MongoQuery {
 	 * 
 	 * @var int $_rows
 	 * @access protected
+	 * @used-by MongoQuery::__construct()
+	 * @used-by MongoQuery::count()
 	 */
 	protected $_rows;
 
@@ -26,6 +36,8 @@ class MongoQuery {
 	 * @param array $results
 	 * @param int $rows
 	 * @access public
+	 * @uses MongoQuery::_results
+	 * @uses MongoQuery::_rows
 	 */
 	public function __construct($results, $rows) {
 		$this->_results = $results;
@@ -37,6 +49,7 @@ class MongoQuery {
 	 * 
 	 * @return array
 	 * @access public
+	 * @uses MongoQuery::_results
 	 */
 	public function all() {
 		return $this->_results;
@@ -51,6 +64,7 @@ class MongoQuery {
 	 * 
 	 * @return int
 	 * @access public
+	 * @uses MongoQuery::_rows Again, as I said, this function appears to be a proxy to publicly access $this->_rows, but why bother?
 	 */
 	public function count() {
 		return $this->_rows;

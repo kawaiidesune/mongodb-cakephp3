@@ -1,6 +1,9 @@
 <?php
 /**
- * 
+ * @author Véronique Bellamy <v@vero.moe>
+ * @license MIT
+ *
+ * @since 0.1-dev
  */
 namespace Hayko\Mongodb\Database;
 
@@ -9,7 +12,6 @@ use Hayko\Mongodb\Database\Schema\MongoSchema;
 use Cake\Datasource\ConnectionInterface;
 use Cake\Database\Log\LoggedQuery;
 use Cake\Database\Log\QueryLogger;
-
 
 class Connection implements ConnectionInterface {
 

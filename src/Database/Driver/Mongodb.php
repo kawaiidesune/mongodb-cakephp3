@@ -1,4 +1,10 @@
 <?php
+/**
+ * @author Véronique Bellamy <v@vero.moe>
+ * @license MIT
+ *
+ * @since 0.1-dev
+ */
 namespace Hayko\Mongodb\Database\Driver;
 use MongoDB\Driver\Manager;
 use MongoDB\Driver\ReadPreference;

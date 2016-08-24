@@ -1,4 +1,10 @@
 <?php
+/**
+ * @author Véronique Bellamy <v@vero.moe>
+ * @license MIT
+ *
+ * @since 0.1-dev
+ */
 namespace Hayko\Mongodb\ORM;
 
 class ResultSet {
@@ -7,6 +13,7 @@ class ResultSet {
 	 * 
 	 * @var array $_results
 	 * @access protected
+	 * @used-by ResultSet::__construct()
 	 */
 	protected $_results;
 
@@ -15,6 +22,7 @@ class ResultSet {
 	 * 
 	 * @var string $_table
 	 * @access protected
+	 * @used-by ResultSet::__construct()
 	 */
 	protected $_table;
 
@@ -24,6 +32,8 @@ class ResultSet {
 	 * @param \MongoCursor $cursor
 	 * @param string $table
 	 * @access public
+	 * @uses ResultSet::_results
+	 * @uses ResultSet::_table
 	 */
 	public function __construct(\MongoDB\Driver\Cursor $cursor, $table) {
 		$this->_results = $cursor->toArray();
@@ -36,6 +46,8 @@ class ResultSet {
 	 * @return []Cake\ORM\Entity $results
 	 * @access public
 	 * @todo Check to see if this toArray function is used elsewhere. It's really not necessary.
+	 * @uses Document::__construct()
+	 * @uses Document::cakefy()
 	 */
 	public function toArray() {
 		$results = [];

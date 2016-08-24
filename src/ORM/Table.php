@@ -1,5 +1,10 @@
 <?php 
-
+/**
+ * @author Véronique Bellamy <v@vero.moe>
+ * @license MIT
+ *
+ * @since 0.1-dev
+ */
 namespace Hayko\Mongodb\ORM;
 
 use ArrayObject;
@@ -46,6 +51,10 @@ class Table extends CakeTable {
 	 * @param array $options
 	 * @return MongoQuery|Cake\ORM\Entity
 	 * @access public
+	 * @uses MongoFinder::__construct()
+	 * @uses MongoQuery::__construct()
+	 * @uses ResultSet::__construct()
+	 * @uses ResultSet::toArray()
 	 */
 	public function find($type = 'all', $options = []) {
 		$query = new MongoFinder($this->__getCollection(), $options); // TODO: This makes no sense. Why feed a MongoDB\Driver\Cursor object into a function where a CONNECTION is supposed to be?
@@ -73,6 +82,10 @@ class Table extends CakeTable {
 	 * @param array $options
 	 * @return Cake\ORM\Entity
 	 * @access public
+	 * @uses Document::__construct()
+	 * @uses Document::cakefy()
+	 * @uses MongoFinder::__construct()
+	 * @uses MongoFinder::get()
 	 */
 	public function get($primaryKey, $options = []) {
 		$query = new MongoFinder($this->__getCollection(), $options);
@@ -98,6 +111,7 @@ class Table extends CakeTable {
 	 * @param array $options
 	 * @return bool
 	 * @access public
+	 * @uses \MongoDB\BSON\ObjectId::__construct()
 	 */
 	public function delete(EntityInterface $entity, $options = []) {
 		try {
@@ -117,6 +131,8 @@ class Table extends CakeTable {
 	 * @param array $options
 	 * @return mixed $success
 	 * @access public
+	 * @uses ArrayObject::__construct()
+	 * @uses \MongoDB\BSON\UTCDateTime()
 	 */
 	public function save(EntityInterface $entity, $options = []) {
 		$options = new ArrayObject($options + [
@@ -166,30 +182,11 @@ class Table extends CakeTable {
         $data = $entity->toArray();
         $isNew = $entity->isNew();
 
-        /****************************************************************************
-		 *
-		 * CONVERT TO MONGODATE
-		 *
-		 * So, this is a bit different. The original code looks like it can take a Time
-		 * object (as evidenced by the use of the strtotime() function), but this no longer
-		 * works in MongoDB\BSON\UTCDateTime nor MongoDB\BSON\Timestamp classes.
-		 *
-		 * There are two classes: UTCDateTime and Timestamp. Timestamp has a constructor
-		 * that accepts two parameters, increment and timestamp (both, oddly enough, in integer
-		 * format).
-		 * http://php.net/manual/en/mongodb-bson-timestamp.construct.php
-		 *
-		 * However, UTCDateTime's constructor does not accept a timestamp. It accepts an integer 
-		 * called "milliseconds" in the variable. Milliseconds, as compared to WHAT? Plus, you can
-		 * have only so many milliseconds before the number is too big to be an integer anyway.
-		 * http://php.net/manual/en/class.mongodb-bson-utcdatetime.php
-		 *
-		 ****************************************************************************/
         if (isset($data['created'])) {
-        	$data['created']  = new \MongoDate(strtotime($data['created']->toDateTimeString()));
+        	$data['created']  = new \MongoDB\BSON\UTCDateTime(strtotime($data['created']->toDateTimeString())); // TODO: Convert to Unix epoch
         }
         if (isset($data['modified'])) {
-        	$data['modified'] = new \MongoDate(strtotime($data['modified']->toDateTimeString()));
+        	$data['modified'] = new \MongoDB\BSON\UTCDateTime(strtotime($data['modified']->toDateTimeString())); // TODO: Convert to Unix epoch
         }
 
         if ($isNew) {
@@ -217,7 +214,6 @@ class Table extends CakeTable {
         if ($success) {
             return $entity;
         }
-
 		return false;
 	}
 
@@ -267,6 +263,7 @@ class Table extends CakeTable {
 	 * @param array $data
 	 * @return mixed $success
 	 * @access protected
+	 * @uses \MongoDB\BSON\ObjectId::__construct()
 	 */
 	protected function _update($entity, $data) {
 		unset($data['_id']);
@@ -287,14 +284,14 @@ class Table extends CakeTable {
 	 * create new MongoId
 	 * 
 	 * @param mixed $primary
-	 * @return MongoId
+	 * @return \MongoDB\BSON\ObjectID()
 	 * @access public
+	 * @uses MongoDB\BSON\ObjectID::__construct()
 	 */
 	protected function _newId($primary) {
 		if (!$primary || count((array)$primary) > 1) {
             return null;
         }
-
-        return new MongoDB\BSON\ObjectID();
+        return new \MongoDB\BSON\ObjectID();
 	}
 }
