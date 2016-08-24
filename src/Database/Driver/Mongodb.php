@@ -58,18 +58,27 @@ class Mongodb {
 	 *
 	 * @var array
 	 * @access public
-	 * @todo Add in the SSH tunnel variables.
-	 *
 	 */
 	protected $_baseConfig = [
-		'set_string_id' => true,
-		'persistent' => true,
-		'host'       => 'localhost',
-		'database'   => '',
-		'port'       => 27017,
-		'login'		=> '',
-		'password'	=> '',
-		'replicaset'	=> '',
+		'set_string_id'		=> true,
+		'persistent'		=> true,
+		'host'      		=> 'localhost',
+		'database'  		=> '',
+		'port'      		=> 27017,
+		'login'				=> '',
+		'password'			=> '',
+		'replicaset'		=> '',
+		'ssh'				=> [
+			'host'			=> '',
+			'user'			=> '',
+			'password'		=> '',
+			'port'			=> 22,
+			'key'			=> [
+				'public'	=> '',
+				'private'	=> '',
+				'passphrase'=> '',
+			]
+		]
 	];
 
 	/**
