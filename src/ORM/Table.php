@@ -272,7 +272,6 @@ class Table extends CakeTable {
 
 		$success = $entity;
         $collection = $this->__getCollection();
-
         if (is_object($collection)) {
         	$r = $collection->update(['_id' => new \MongoDB\BSON\ObjectId($entity->_id)], $data); // TODO: Check to see if this is taking the correct parameters in the ObjectId constructor.
         	if ($r['ok'] == false) {

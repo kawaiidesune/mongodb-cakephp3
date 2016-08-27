@@ -49,6 +49,7 @@ class MongoFinder {
 	 * @access public
 	 * @param Mongo $connection
 	 * @param array $options
+	 * @todo Figure out what the type $connection is now that we're using the MongoDB library and not the old Mongo library.
 	 * @used-by Table::find()
 	 * @used-by Table::get()
 	 * @uses MongoFinder::_options
@@ -74,8 +75,8 @@ class MongoFinder {
 	 * 
 	 * @access public
 	 * @param Mongo $connection
-	 * @return Mongo
-	 * @todo Update documentation with ACTUAL return type, seeing as Mongo is from the old class...
+	 * @return Mongo|void
+	 * @todo Update documentation with ACTUAL return type, seeing as Mongo is from the old class... But it seems return is void if the $connection setting IS not declared. If not, it seems to return NOTHING.
 	 * @used-by MongoFinder::__construct()
 	 * @uses MongoFinder::_connection
 	 */
@@ -235,6 +236,7 @@ class MongoFinder {
 	 * @access public
 	 * @return MongoCursor $cursor
 	 * @todo Update documentation with ACTUAL return value, seeing as MongoCursor is from the old class...
+	 * @todo It would seem that connection() has issues. The find function called after it appears to be Table::find(), given the number of parameters, but if this is the case, then the return value in the PHPDoc for MongoFinder::connection() is wrong because in that case, it should be Table type, not Mongo type. So, WTF is going on?
 	 * @used-by MongoFinder::findAll()
 	 * @used-by MongoFinder::findList()
 	 * @used-by MongoFinder::get()
@@ -242,7 +244,7 @@ class MongoFinder {
 	 * @uses MongoFinder::_totalRows
 	 */
 	public function find() {
-		$cursor = $this->connection()->find($this->_options['where'], $this->_options['fields']);
+		$cursor = $this->connection()->find($this->_options['where'], $this->_options['fields']); // THIS seems like it would result in an infinite loop. O.o
 		$this->_totalRows = $cursor->count();
 
 		if ($this->_totalRows > 0) {
