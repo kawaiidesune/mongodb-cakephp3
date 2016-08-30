@@ -39,7 +39,7 @@ class Table extends CakeTable {
 	 * @param string $field
 	 * @return bool
 	 */
-	public function hasField(string $field) {
+	public function hasField($field) {
 		return true;
 	}
 
@@ -56,7 +56,7 @@ class Table extends CakeTable {
 	 * @uses ResultSet::__construct()
 	 * @uses ResultSet::toArray()
 	 */
-	public function find(string $type = 'all', array $options = []) {
+	public function find($type = 'all', $options = []) {
 		$query = new MongoFinder($this->__getCollection(), $options);
 		$method = 'find' . ucfirst($type);
 		if (method_exists($query, $method)) {
@@ -85,7 +85,7 @@ class Table extends CakeTable {
 	 * @uses MongoFinder::__construct()
 	 * @uses MongoFinder::get()
 	 */
-	public function get(string $primaryKey, array $options = []) {
+	public function get($primaryKey, $options = []) {
 		$query = new MongoFinder($this->__getCollection(), $options);
 		$mongoCursor = $query->get($primaryKey);
 
@@ -112,11 +112,11 @@ class Table extends CakeTable {
 	 * @since 0.1-dev The try catch function used to be typecast as MongoException, but I removed it given how many Mongo Exceptions were created in the new API. Not sure what the impact will be of NOT typecasting it, but it's important to note.
 	 * @uses \MongoDB\BSON\ObjectId::__construct()
 	 */
-	public function delete(Cake\Datasource\EntityInterface $entity, array $options = []) {
+	public function delete(EntityInterface $entity, $options = []) {
 		try {
 			$collection = $this->__getCollection();
 			$success = $collection->remove(['_id' => new \MongoDB\BSON\ObjectId($entity->_id)]);
-		} catch ($e) {
+		} catch (\MongoDB\Driver\Exception\Exception $e) {
 			trigger_error($e->getMessage());
 			return false;
 		}
@@ -134,7 +134,7 @@ class Table extends CakeTable {
 	 * @uses ArrayObject::__construct()
 	 * @uses \MongoDB\BSON\UTCDateTime()
 	 */
-	public function save(\Cake\ORM\Entity $entity, array $options = []) {
+	public function save(EntityInterface $entity, $options = []) {
 		$options = new ArrayObject($options + [
             'checkRules' => true,
             'checkExisting' => true,
@@ -168,7 +168,7 @@ class Table extends CakeTable {
 	 * @param array $options
 	 * @return mixed $success
 	 */
-	protected function _processSave(\Cake\ORM\Entity $entity, array $options) {
+	protected function _processSave($entity, $options) {
 		$mode = $entity->isNew() ? RulesChecker::CREATE : RulesChecker::UPDATE;
         if ($options['checkRules'] && !$this->checkRules($entity, $mode, $options)) {
             return false;
@@ -226,7 +226,7 @@ class Table extends CakeTable {
 	 * @throws RunTimeException if $this->primaryKey() as assigned to $primary is an empty array.
 	 * @uses Table::_newId()
 	 */
-	protected function _insert(\Cake\ORM\Entity $entity, array $data) {
+	protected function _insert($entity, $data) {
 		$primary = (array)$this->primaryKey();
 		if (empty($primary)) {
             $msg = sprintf(
@@ -245,12 +245,12 @@ class Table extends CakeTable {
         	return $success;
         }
 
-        $success = $entity;
+        $success = $entity; // TODO: Shouldn't we be returning a BSON\ObjectId instead?
         $collection = $this->__getCollection();
 
         if (is_object($collection)) {
-        	$r = $collection->insert($data);
-        	if ($r['ok'] == false) {
+	        $r = new \MongoDB\Driver\BulkWrite();
+        	if (!$r->insert($data)) {
         		$success = false;
         	}
         }
@@ -267,7 +267,7 @@ class Table extends CakeTable {
 	 * @uses \MongoDB\BSON\ObjectId::__construct()
 	 * @uses Table::__getCollection()
 	 */
-	protected function _update(\Cake\ORM\Entity $entity, array $data) {
+	protected function _update($entity, $data) {
 		unset($data['_id']);
 
 		$success = $entity;

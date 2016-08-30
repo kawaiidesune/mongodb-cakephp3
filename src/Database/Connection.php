@@ -78,7 +78,7 @@ class Connection implements ConnectionInterface {
 	 * @return void
 	 */
 	public function __destruct() {
-		if ($this->_driver->connected) {
+		if ($this->_driver->isConnected()) {
 			$this->_driver->disconnect(); // However, the new PHP MongoDB library uses a lazy way to connect.
 			unset($this->_driver);
 		}

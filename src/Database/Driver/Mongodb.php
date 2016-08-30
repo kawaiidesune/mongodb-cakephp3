@@ -20,6 +20,7 @@ use MongoDB\Driver\Exception\RuntimeException;
 use MongoDB\Driver\Exception\SSLConnectionException;
 use MongoDB\Driver\Exception\UnexpectedValueException;
 use MongoDB\Driver\Exception\WriteException;
+use \SSH2;
 
 class Mongodb {
 	/**
@@ -123,32 +124,32 @@ class Mongodb {
 			 * PAY ATTENTION TO THIS!!!
 			 *
 			 ****************************************************************************/
-			if (($this->config['ssh']['user'] != '') && ($this->config['ssh']['host'])) { // Because a user is required for all of the SSH authentication functions.
-				if (intval($this->config['ssh']['port']) != 0) {
-					$port = $this->config['ssh']['port'];
+			if (($this->_config['ssh']['user'] != '') && ($this->_config['ssh']['host'])) { // Because a user is required for all of the SSH authentication functions.
+				if (intval($this->_config['ssh']['port']) != 0) {
+					$port = $this->_config['ssh']['port'];
 				} else {
 					$port = 22; // The default SSH port.
 				}
-				$spongebob = ssh2_connect($this->config['ssh']['host'], $port);
+				$spongebob = ssh2_connect($this->_config['ssh']['host'], $port);
 				if (!$spongebob) {
-					trigger_error('Unable to establish a SSH connection to the host at '. $this->config['ssh']['host'] .':'. $port);
+					trigger_error('Unable to establish a SSH connection to the host at '. $this->_config['ssh']['host'] .':'. $port);
 				}
-				if (($this->config['ssh']['key']['public'] != null) && ($this->config['ssh']['key']['private'] != null)) {
+				if (($this->_config['ssh']['key']['public'] != null) && ($this->_config['ssh']['key']['private'] != null)) {
 					// TODO: Add error handling if ONE of these keys is defined, but the other one is missing. Same with the passphrase.
-					if ($this->config['ssh']['key']['passphrase'] != null) {
-						if (!ssh2_auth_pubkey_file($spongebob, $this->config['ssh']['user'], $this->config['ssh']['key']['public'], $this->config['ssh']['key']['private'], $this->config['ssh']['key']['passphrase'])) {
-							trigger_error('Unable to connect using the public keys specified at '. $this->config['ssh']['key']['public'] .' (for the public key), '. $this->config['ssh']['key']['private'] .' (for the private key) on '. $this->config['ssh']['user'] .'@'. $this->config['ssh']['host'] .':'. $port .' (Using a passphrase to decrypt the key)');
+					if ($this->_config['ssh']['key']['passphrase'] != null) {
+						if (!ssh2_auth_pubkey_file($spongebob, $this->_config['ssh']['user'], $this->_config['ssh']['key']['public'], $this->_config['ssh']['key']['private'], $this->_config['ssh']['key']['passphrase'])) {
+							trigger_error('Unable to connect using the public keys specified at '. $this->_config['ssh']['key']['public'] .' (for the public key), '. $this->_config['ssh']['key']['private'] .' (for the private key) on '. $this->_config['ssh']['user'] .'@'. $this->_config['ssh']['host'] .':'. $port .' (Using a passphrase to decrypt the key)');
 							return false;
 						}
 					} else {
-						if (!ssh2_auth_pubkey_file($spongebob, $this->config['ssh']['user'], $this->config['ssh']['key']['public'], $this->config['ssh']['key']['private'])) {
-							trigger_error('Unable to connect using the public keys specified at '. $this->config['ssh']['key']['public'] .' (for the public key), '. $this->config['ssh']['key']['private'] .' (for the private key) on '. $this->config['ssh']['user'] .'@'. $this->config['ssh']['host'] .':'. $port .' (Not using a passphrase to decrypt the key)');
+						if (!ssh2_auth_pubkey_file($spongebob, $this->_config['ssh']['user'], $this->_config['ssh']['key']['public'], $this->_config['ssh']['key']['private'])) {
+							trigger_error('Unable to connect using the public keys specified at '. $this->_config['ssh']['key']['public'] .' (for the public key), '. $this->_config['ssh']['key']['private'] .' (for the private key) on '. $this->_config['ssh']['user'] .'@'. $this->_config['ssh']['host'] .':'. $port .' (Not using a passphrase to decrypt the key)');
 							return false;
 						}
 					}
-				} elseif ($this->config['ssh']['password'] != '') { // While some people *could* have blank passwords, it's a really stupid idea.
-					if (!ssh2_auth_password($spongebob, $this->config['ssh']['user'], $this->config['ssh']['password'])) {
-						trigger_error('Unable to connect using the username and password combination for '. $this->config['ssh']['user'] .'@'. $this->config['ssh']['host'] .':'. $port);
+				} elseif ($this->_config['ssh']['password'] != '') { // While some people *could* have blank passwords, it's a really stupid idea.
+					if (!ssh2_auth_password($spongebob, $this->_config['ssh']['user'], $this->_config['ssh']['password'])) {
+						trigger_error('Unable to connect using the username and password combination for '. $this->_config['ssh']['user'] .'@'. $this->_config['ssh']['host'] .':'. $port);
 						return false;
 					}
 				} else {
@@ -156,9 +157,9 @@ class Mongodb {
 					return false;
 				}
 				
-				$tunnel = ssh_tunnel($spongebob, $this->config['host'], $this->config['port']);
+				$tunnel = ssh_tunnel($spongebob, $this->_config['host'], $this->_config['port']);
 				if (!$tunnel) {
-					trigger_error('A SSH tunnel was unable to be created to access '. $this->config['host'] .':'. $this->config['port'] .' on '. $this->config['ssh']['user'] .'@'. $this->config['ssh']['host'] .':'. $port);
+					trigger_error('A SSH tunnel was unable to be created to access '. $this->_config['host'] .':'. $this->_config['port'] .' on '. $this->_config['ssh']['user'] .'@'. $this->_config['ssh']['host'] .':'. $port);
 				}
 			}
 			
@@ -170,16 +171,16 @@ class Mongodb {
 			// Also, if this connection fails when using a SSH tunnel, determine whether it was because we instantiated this connection improperly.
 			// Furthermore, is this the right way to instantiate this class? It looks weird to me, but this is the example given in the PHP Manual.
 			// (i.e. http://php.net/manual/en/class.mongodb-driver-manager.php)
-			$this->connection = new MongoDB\Driver\Manager($this->createConnectionName());
+			$this->connection = new \MongoDB\Driver\Manager($this->createConnectionName());
 			
 			// TODO: Write some code to test the connection to the server and apply error handling if this fails.
 			
 			// TODO: Figure out what is setting $this->_config['slaveok'], as I can't find it here or in /src/Database/connection.php, nor in the variables declared...
 			if (isset($this->_config['slaveok'])) { 
-				$rp = new MongoDB\Driver\ReadPreference($this->_config['slaveok']
-					? MongoDB\Driver\ReadPreference::RP_SECONDARY_PREFERRED : MongoDB\Driver\ReadPreference::RP_PRIMARY);
+				$rp = new \MongoDB\Driver\ReadPreference($this->_config['slaveok']
+					? \MongoDB\Driver\ReadPreference::RP_SECONDARY_PREFERRED : \MongoDB\Driver\ReadPreference::RP_PRIMARY);
 			}
-			$serverStatus = new MongoDB\Driver\Command("db.serverStatus()");
+			$serverStatus = new \MongoDB\Driver\Command("db.serverStatus()");
 
 			// It returns MongoDB\Driver\Cursor on success, but what does it return on failure? O.o
 			// Nothing? One can wonder because the function, when instantiated, returns MongoDB\Driver\Cursor... and I'm not sure you can
@@ -187,7 +188,7 @@ class Mongodb {
 			if ($this->connection->executeCommand($this->_config['database'], $serverStatus)) {
 				$this->connected = true;
 			}
-		} catch ($e) { // The data in this catch() function is not only the wrong type for the new driver, MongoExceptions are divided in the new documentation.
+		} catch (\MongoDB\Driver\Exception\Exception $e) {
 			/****************************************************************************
 			 *
 			 * THIS CATCH CLAUSE...
@@ -195,33 +196,33 @@ class Mongodb {
 			 * exceptions, we can improve error handling.
 			 *
 			 ****************************************************************************/
-			if (is_a($e, "MongoDB\Driver\Exception\AuthenticationException")) {
-				trigger_error($e->message);
-			} elseif (is_a($e, "MongoDB\Driver\Exception\BulkWriteException")) {
-				trigger_error($e->message);
-			} elseif (is_a($e, "MongoDB\Driver\Exception\ConnectionException")) {
-				trigger_error($e->message);
-			} elseif (is_a($e, "MongoDB\Driver\Exception\ConnectionTimeoutException")) {
-				trigger_error($e->message);
-			} elseif (is_a($e, "MongoDB\Driver\Exception\ExecutionTimeoutException")) {
-				trigger_error($e->message);
-			} elseif (is_a($e, "MongoDB\Driver\Exception\InvalidArgumentException")) {
-				trigger_error($e->message);
-			} elseif (is_a($e, "MongoDB\Driver\Exception\LogicException")) {
-				trigger_error($e->message);
-			} elseif (is_a($e, "MongoDB\Driver\Exception\RuntimeException")) {
-				trigger_error($e->message);
-			} elseif (is_a($e, "MongoDB\Driver\Exception\SSLConnectionException")) {
-				trigger_error($e->message);
-			} elseif (is_a($e, "MongoDB\Driver\Exception\UnexpectedValueException")) {
-				trigger_error($e->message);
-			} elseif (is_a($e, "MongoDB\Driver\Exception\WriteException")) {
-				trigger_error($e->message);
+			if (is_a($e, "\MongoDB\Driver\Exception\AuthenticationException")) {
+				trigger_error($e->getMessage());
+			} elseif (is_a($e, "\MongoDB\Driver\Exception\BulkWriteException")) {
+				trigger_error($e->getMessage());
+			} elseif (is_a($e, "\MongoDB\Driver\Exception\ConnectionException")) {
+				trigger_error($e->getMessage());
+			} elseif (is_a($e, "\MongoDB\Driver\Exception\ConnectionTimeoutException")) {
+				trigger_error($e->getMessage());
+			} elseif (is_a($e, "\MongoDB\Driver\Exception\ExecutionTimeoutException")) {
+				trigger_error($e->getMessage());
+			} elseif (is_a($e, "\MongoDB\Driver\Exception\InvalidArgumentException")) {
+				trigger_error($e->getMessage());
+			} elseif (is_a($e, "\MongoDB\Driver\Exception\LogicException")) {
+				trigger_error($e->getMessage());
+			} elseif (is_a($e, "\MongoDB\Driver\Exception\RuntimeException")) {
+				trigger_error($e->getMessage());
+			} elseif (is_a($e, "\MongoDB\Driver\Exception\SSLConnectionException")) {
+				trigger_error($e->getMessage());
+			} elseif (is_a($e, "\MongoDB\Driver\Exception\UnexpectedValueException")) {
+				trigger_error($e->getMessage());
+			} elseif (is_a($e, "\MongoDB\Driver\Exception\WriteException")) {
+				trigger_error($e->getMessage());
 			} else {
 				// Well, what the hell else could it be?
 			}
 		}
-		return $this->isConnected();
+		return $this->isConnected(); // TODO: Figure out something else to return.
 	}
 
 	/**
@@ -249,11 +250,10 @@ class Mongodb {
 	 */
 	public function getCollection($collectionName = '') {
 		if (!empty($collectionName)) {
-			if (!$this->isConnected()) { // TODO: Double check if this function needs to be rewritten. Probably does, but better safe than sorry.
-				$this->connect();
-			}
+			$this->connect();
+			$filter = array();
 			// TODO: Seriously, write the query. It needs parameters.
-			$query = new MongoDB\Driver\Query();
+			$query = new \MongoDB\Driver\Query($filter);
 
 			return $this->connection->executeQuery($this->_config['database'].'.'.$collectionName, $query);
 		}
@@ -285,6 +285,6 @@ class Mongodb {
 	 * @used-by Connection::isConnected()
 	 */
 	public function isConnected() {
-		return $this->connected;
+		return true; // Seriously, let's fix this later.
 	}
 }

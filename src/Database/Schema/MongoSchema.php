@@ -56,7 +56,7 @@ class MongoSchema {
 		$table = new Table(['table' => $name]);
 
 		if(empty($table->primaryKey())) {
-			$table->addColumn('_id', ['type' => 'string', 'default' => new \MongoDB\Driver\ObjectId(), 'null' => false]);
+			$table->addColumn('_id', ['type' => 'string', 'default' => new \MongoDB\BSON\ObjectId(), 'null' => false]);
 			$table->addConstraint('_id', ['type' => 'primary', 'columns' => ['_id']]);
 		}
 		return $table;
