@@ -131,12 +131,21 @@ class Mongodb {
 					$port = 22; // The default SSH port.
 				}
 				$spongebob = ssh2_connect($this->_config['ssh']['host'], $port);
+				if ($this->_config['ssh']['hostkey'] != "") {
+					$connhostkey = ssh2_fingerprint($spongebob, SSH2_FINGERPRINT_MD5);
+					if ($connhostkey != $this->_config['ssh']['hostkey']) {
+						trigger_error("HOSTKEY MISMATCH!\nPossible Man-In-The-Middle Attack?");
+						die();
+					}
+				}
 				if (!$spongebob) {
 					trigger_error('Unable to establish a SSH connection to the host at '. $this->_config['ssh']['host'] .':'. $port);
 				}
 				if (($this->_config['ssh']['key']['public'] != null) && ($this->_config['ssh']['key']['private'] != null)) {
 					// TODO: Add error handling if ONE of these keys is defined, but the other one is missing. Same with the passphrase.
 					if ($this->_config['ssh']['key']['passphrase'] != null) {
+						$pubkey = file_get_contents($this->_config['ssh']['key']['public']);
+						debug($pubkey);
 						if (!ssh2_auth_pubkey_file($spongebob, $this->_config['ssh']['user'], $this->_config['ssh']['key']['public'], $this->_config['ssh']['key']['private'], $this->_config['ssh']['key']['passphrase'])) {
 							trigger_error('Unable to connect using the public keys specified at '. $this->_config['ssh']['key']['public'] .' (for the public key), '. $this->_config['ssh']['key']['private'] .' (for the private key) on '. $this->_config['ssh']['user'] .'@'. $this->_config['ssh']['host'] .':'. $port .' (Using a passphrase to decrypt the key)');
 							return false;
