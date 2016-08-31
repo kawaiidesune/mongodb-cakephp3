@@ -1,6 +1,6 @@
 {
     "name": "hayko/mongodb",
-    "description": "An Mongodb datasource for CakePHP 3.0",
+    "description": "A MongoDB datasource for CakePHP 3.0. Uses the new PHP MongoDB driver that is compatible with PHP 7.",
     "type": "cakephp-plugin",
     "require": {
         "cakephp/cakephp": "~3.0"
@@ -10,6 +10,10 @@
     },
     "license": "MIT",
     "authors": [
+        {
+	        "name": "Véronique Bellamy",
+	        "email": "v@vero.moe"
+        },
         {
             "name": "tiaguinho",
             "email": "tiaguinhocab@gmail.com"
