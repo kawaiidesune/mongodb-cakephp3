@@ -14,13 +14,28 @@ class MongoShell extends Shell
         $this->out('CakePHP MongoDB shell plugin. To initialize, type "bin/cake mongo init" (without the quotation marks) to set this up.');
     }
     public function init() { // TODO: Add the option to define variables when calling the function.
-	    $this->out('Welcome to the MongoDB initialization mode.');
+	    $this->out('Welcome to the MongoDB CakePHP plugins shell initialization mode.');
+	    $this->out("This plugin will write a configuration file to your config/folder, please wait one moment while we check to see if that file already exists...");
+	    try {
+		    Configure::load("mongodb", "default", false);
+		    $this->abort("Configuration file mongodb.php exists. In an effort to avoid causing problems with data already written, this wizard will now shut down.");
+	    } catch (Cake\Core\Exception $e) {
+		    $this->out("Okay, so the configuration file does not exist. Let's try to create it...");
+		    try {
+			    Configure::write('Errata.source', 'MongoShell'); // Write where this config file came from.
+			    Configure::dump('mongodb', 'default', ['Errata']);
+			    $this->out("Configuration file created successfully.");
+		    } catch (Cake\Core\Exception $e) {
+			    $this->abort("Couldn't write configuration file. Here's the scoop from the error handler: \n\n" . $e);
+		    }
+	    }
 	    $sshquestion = false; // Because they haven't answered it yet.
 	    $sshhost = null;
 	    $sshport = null;
 	    $sshuser = null;
 	    $sshpass = null;
-	    $sshpubkey = null;
+	    $sshpubkey = null; // The path to the public key.
+	    $sshpublickey = new File(); // The file contents of the public key.
 	    $sshprikey = null;
 	    $host = null;
 	    $db = null;
@@ -186,6 +201,15 @@ class MongoShell extends Shell
 			    $connection = ssh2_connect($sshhost . ":" . $sshport);
 			    if (ssh2_auth_password($connection, $sshuser, $sshpass)) {
 				    $this->out("Well, it seemed to work. Hooray.");
+				    Configure::write('SSH.Host', $sshhost);
+				    Configure::write('SSH.Port', $sshport);
+				    Configure::write('SSH.User', $sshuser);
+				    Configure::write('SSH.Password', crypt($sshpass, Configure::read('Security.salt')));
+				    if ($hostkeyquestion == "y") {
+					    Configure::write('SSH.Fingerprint',ssh2_fingerprint($connection, SSH2_FINGERPRINT_MD5));
+				    }
+				    Configure::write('Errata.SSHConn', 'UserPassCombo');
+				    Configure::dump('mongodb', 'default', ['Errata', 'SSH']);
 			    } else {
 				    $this->out("Nope, as I predicted, it wouldn't work. Tragically, ssh2_auth_password() won't tell me WHY you failed, but you failed.");
 				    $this->out("You should take a time out and think about what you did.");
@@ -198,11 +222,12 @@ class MongoShell extends Shell
 			    $pubkeyquestion = false;
 			    while (!$pubkeyquestion) {
 				    $sshpubkey = $this->in("I'm going to need the path to your public key. Please enter a valid path.");
-				    if (!file_exists($sshpubkey)) {
+				    $sshpublickey->open($sshpubkey);
+				    if (!$sshpublickey->exists()) {
 					    $this->out("What are you talking about? There's no key there!");
 				    } elseif ($sshpubkey == "") {
 					    $this->out("You mean to tell me you forgot? Seriously, where's the key?");
-				    } elseif (!is_readable($sshpubkey)) {
+				    } elseif (!$sshpublickey->readable()) {
 					    $this->abort("Um, that file wasn't readable. You might want to check on that. The file permissions were set to " . fileperms($sshpubkey) . " and the file owner is set to ". fileowner($sshpubkey) .".");
 				    } else {
 					    $this->out("Okay, it seems like the file might work.");
@@ -242,19 +267,71 @@ class MongoShell extends Shell
 				    }
 			    }
 			    $keyserve = ssh2_publickey_init($connection);
-			    $blob = null; // TODO: Add functionality to (a) Read the public key file, (b) extract all the other stuff and (c) base64 decode it.
-			    if (ssh2_publickey_add($keyserve, "ssh-rsa", $blob)) {
+			    $pubkeytext = $sshpublickey->read();
+			    $pubkeytext = chop($pubkeytext,"ssh-rsa\n");
+			    $pubkeytext = explode("\n", $pubkeytext);
+			    $pubkeytext = $pubkeytext[0];
+			    $pubkeytext = base64_decode($pubkeytext);
+			    $pubkeyattributes = array(
+				    'comments' => 'Placed on the keyring by mongodb-cakephp3 plugin. If the plugin is still installed, use "bin\cake mongo ssh-remove" in terminal to remove the key automatically. See https://github.com/kawaiidesune/mongodb-cakephp3 for details.',
+				    'host' => $sshhost,
+				    'username' => $sshuser
+			    );
+			    if (ssh2_publickey_add($keyserve, "ssh-rsa", $pubkeytext, false, $pubkeyattributes)) {
 				    $this->out("The public key was added to the SSH2 keyring successfully.");
 			    } else {
 				    $this->abort("Something went wrong with adding the public key to the SSH2 keyring.");
 			    }
+			    if (ssh2_auth_agent($connection, $sshuser)) {
+				    Configure::write('SSH.Host', $sshhost);
+				    Configure::write('SSH.Port', $sshport);
+				    Configure::write('SSH.User', $sshuser);
+				    if ($hostkeyquestion == "y") {
+					    Configure::write('SSH.Fingerprint',ssh2_fingerprint($connection, SSH2_FINGERPRINT_MD5));
+				    }
+				    Configure::write('Errata.SSHConn', 'PublicPrivateKeyCombo');
+				    Configure::dump('mongodb', 'default', ['Errata', 'SSH']);
+			    } else {
+				    $this->abort("Something went wrong with the connection. Unfortunately, ssh2_auth_agent() won't tell me because it only returns a boolean value...");
+			    }
+			    $this->out("If you made it this far, congrats. The connection worked. Now, let's configure the rest of the details.")
+		    } // This ends the if ($method) statement.
+	    } // This ends the if ($ssh) statement. Now, we can get back to configuring the rest of the details concerning MongoDB.
+	    $hostquestion = false;
+	    while ($hostquestion == false) {
+		    $host = $this->in("Okay, so where is your MongoDB installation located (press enter to accept the default, localhost)");
+		    if ($host == "") {
+			    $this->verbose("Setting the MongoDB host name to localhost.");
+		    } elseif (!isValidDomain($host)) {
+			    $this->out("Domain name appears to be invalid.");
+		    } else {
+			    $this->verbose("Setting the MongoDB host name to " . $host);
 		    }
 	    }
+	    
+	    $dbquestion = false;
+	    while ($dbquestion == false) {
+		    $db = $this->in("What is the name of the collection that you intend to use?");
+		    if ($db == "") {
+			    $this->out("We are going to need a collection name...");
+		    } else {
+			    $this->verbose("Collection name will be set to " . $db);
+			    $dbquestion = true;
+		    }
+	    }
+	    
+	    // TODO: Add some code to test the connection and write the variables to config/mongodb.php
     }
     protected function isValidDomain($domain) {
 	    return (preg_match("/^([a-z\d](-*[a-z\d])*)(\.([a-z\d](-*[a-z\d])*))*$/i", $domain_name) //valid chars check
             && preg_match("/^.{1,253}$/", $domain_name) //overall length check
             && preg_match("/^[^\.]{1,63}(\.[^\.]{1,63})*$/", $domain_name)   ); //length of each label
-    } 
+    }
+    public function getOptionParser() {
+	    $parser = parent::getOptionParser();
+	    $parser->addSubcommand(
+		    'init' => 'A tool to initialize the variables to allow a connection to MongoDB.'
+	    );
+    }
 }
 ?>
